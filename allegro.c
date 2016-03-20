@@ -33,10 +33,10 @@ int init_allegro(ALL *allegro) {
 							allegro->screenWidth = SCREEN_X;
 							allegro->screenHeight = SCREEN_Y;
 
-							if (allegro->fondo = al_load_bitmap_resized("Resources/BackImage.jpg", allegro)) {
+							//if (allegro->fondo = al_load_bitmap_resized("Resources/BackImage.jpg", allegro)) {
 								state = TRUE;
-							}
-							else { printf("Couldn't load BackImage.jpg"); }
+							//}
+							//else { printf("Couldn't load BackImage.jpg"); }
 						}
 						else { printf("Failed to create display"); }
 					}
@@ -91,7 +91,7 @@ void destroyAll(ALL *allegro) {
 	//Fonts
 	al_destroy_font(allegro->font);
 	//Bitmaps
-	al_destroy_bitmap(allegro->fondo);
+	//al_destroy_bitmap(allegro->fondo);
 	//Addons
 	al_uninstall_keyboard();
 	al_uninstall_mouse();

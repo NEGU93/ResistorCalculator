@@ -4,7 +4,7 @@
 
 void main(void) {
 	//Allegro initialization
-	ALL allegroData = { 0, 0, NULL, NULL, NULL, NULL, NULL };
+	ALL allegroData = { 0, 0, NULL, NULL, NULL, NULL, };
 	ALL* allegro = &allegroData;
 	int i = init_allegro(allegro);
 
@@ -18,7 +18,8 @@ void main(void) {
 	GUIElements guiElements;
 	GUIElements* gui = &guiElements;
 	if (!initializeGUIElements(gui)) {
-		printf("Error initializing guiElements");
+		printf("Error initializing guiElements\n");
+		elements->stillRunning = FALSE;
 	}
 
 	while (programElements.stillRunning == TRUE) {
@@ -27,4 +28,6 @@ void main(void) {
 
 	al_destroy_display(allegro->display);
 	destroyAll(allegro);
+
+	getchar();
 }

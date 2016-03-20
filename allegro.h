@@ -27,7 +27,7 @@ typedef struct {
 	//FONTS
 	ALLEGRO_FONT *font;
 	//BITMAPS
-	ALLEGRO_BITMAP* fondo;
+	//ALLEGRO_BITMAP* fondo;
 } ALL;
 
 int init_allegro(ALL *allegro);
