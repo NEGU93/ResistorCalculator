@@ -9,8 +9,8 @@
 #include <allegro5\allegro_image.h>
 #include <allegro5\allegro_acodec.h>
 
-#define SCREEN_X 1680	
-#define SCREEN_Y 900
+#define SCREEN_X 1280	
+#define SCREEN_Y 720
 
 #define MAXRESOLUTION_X SCREEN_X
 #define MAXRESOLUTION_Y SCREEN_Y

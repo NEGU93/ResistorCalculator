@@ -13,12 +13,16 @@ void main(void) {
 		//printf( "Failed to initialize allegro. Closing Program.\n" );
 	}*/
 
-	pos mouse = { 0, 0 };
-	int redraw = FALSE;
-	int stillRunning = TRUE;
+	ProgramElements programElements = { {0, 0}, FALSE, TRUE, NORMAL };
+	ProgramElements *elements = &programElements;
+	GUIElements guiElements;
+	GUIElements* gui = &guiElements;
+	if (!initializeGUIElements(gui)) {
+		printf("Error initializing guiElements");
+	}
 
-	while (stillRunning == TRUE) {
-		stillRunning = eventHandler(allegro, &redraw);
+	while (programElements.stillRunning == TRUE) {
+		programElements.stillRunning = eventHandler(allegro, elements, gui);
 	}
 
 	al_destroy_display(allegro->display);

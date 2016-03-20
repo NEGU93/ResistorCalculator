@@ -14,6 +14,7 @@ typedef struct {
 	int y;
 } pos;
 
+typedef int BOOL;
 typedef unsigned char uchar;
 typedef unsigned long int uint;
 
