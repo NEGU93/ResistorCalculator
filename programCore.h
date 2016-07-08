@@ -55,6 +55,7 @@ private:
 	void updateScreen(ALL* allegro, GUIElements* gui, pos mouse, enum ModeEnum modeEnum);
 	void updateModes(GUIElements* gui, pos mouse, enum ModeEnum modeEnum);
 	void updateAllButtons(GUIElements* gui, pos mouse);
+	void updateResistors(GUIElements* gui);
 	//Mouse Buttons
 	BOOL checkButton(Button button, pos mouse);
 	BOOL click(ALL* allegro, pos mouse, GUIElements* gui, ProgramElements* elements);

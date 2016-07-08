@@ -132,9 +132,10 @@ void ProgramCore::updateScreen(ALL* allegro, GUIElements* gui, pos mouse, enum M
 	al_set_target_backbuffer(allegro->display);
 	al_clear_to_color(al_map_rgb(WHITE));
 	//al_draw_bitmap(allegro->fondo, 0, 0, 0);
+	updateResistors(gui);
 	updateAllButtons(gui, mouse);
 	updateModes(gui, mouse, modeEnum);
-
+	
 	al_flip_display();
 }
 void ProgramCore::updateAllButtons(GUIElements* gui, pos mouse) {
@@ -153,7 +154,7 @@ void ProgramCore::updateButton(Button button, pos mouse) {
 }
 void ProgramCore::updateModes(GUIElements* gui, pos mouse, enum ModeEnum modeEnum) {
 	int i = 0;
-	if (modeEnum == RESISTORPLACE) {
+	if (modeEnum == RESISTORPLACE) { //Draw a resistor that follows the mouse
 		if (gui->resistorAngle == 0) {
 			al_draw_bitmap(gui->resistorImage, mouse.x, mouse.y - al_get_bitmap_height(gui->resistorImage) / 2, 0);
 		}
@@ -170,6 +171,13 @@ void ProgramCore::updateModes(GUIElements* gui, pos mouse, enum ModeEnum modeEnu
 	else if (modeEnum == RIGHTCLICK) { //If I made right click I have to update the menu over the mouse
 		for (i = 0; i < MENUSIZE; i++) {
 			updateButton(gui->menuButtons[i], mouse);
+		}
+	}
+}
+void ProgramCore::updateResistors(GUIElements* gui) {
+	if (!resistorArray.empty()) {
+		for (int i = 0; i < resistorArray.size(); i++) {
+			resistorArray[i].updateResistor(gui->resistorImage);
 		}
 	}
 }
@@ -192,7 +200,12 @@ BOOL ProgramCore::click(ALL* allegro, pos mouse, GUIElements* gui, ProgramElemen
 		else if (checkButton(gui->gndButton, mouse)) { elements->modeEnum = GNDPLACE; }
 		else if (checkButton(gui->vccButton, mouse)) { elements->modeEnum = VCCPLACE; }
 	}
-	else if (elements->modeEnum == RESISTORPLACE || elements->modeEnum == WIREPLACE || elements->modeEnum == GNDPLACE || elements->modeEnum == VCCPLACE || elements->modeEnum == RIGHTCLICK) {
+	else if (elements->modeEnum == RESISTORPLACE) {
+		if (gui->resistorAngle == 0) {	resistorArray.push_back(Resistor(true, mouse.x, mouse.y)); 	}
+		else { resistorArray.push_back(Resistor(false, mouse.x, mouse.y)); }
+		elements->modeEnum = NORMAL;
+	}
+	else if (elements->modeEnum == WIREPLACE || elements->modeEnum == GNDPLACE || elements->modeEnum == VCCPLACE || elements->modeEnum == RIGHTCLICK) {
 		elements->modeEnum = NORMAL;
 	}
 	return true;
