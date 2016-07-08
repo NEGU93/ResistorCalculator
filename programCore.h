@@ -3,6 +3,7 @@
 
 #include "allegro.h"
 #include "def.h"
+#include "Resistor.h"
 
 #define MENUSIZE 4
 
@@ -38,17 +39,28 @@ typedef struct {
 	Button menuButtons[MENUSIZE];
 } GUIElements;
 
-BOOL initializeGUIElements(GUIElements* gui);
-BOOL initializeMenu(GUIElements* gui);
-BOOL eventHandler(ALL* allegro, ProgramElements* elements, GUIElements* gui);
-//Update Functions
-void updateButton(Button button, pos mouse);
-void updateScreen(ALL* allegro, GUIElements* gui, pos mouse, enum ModeEnum modeEnum);
-void updateModes(GUIElements* gui, pos mouse, enum ModeEnum modeEnum);
-void updateAllButtons(GUIElements* gui, pos mouse);
-//Mouse Buttons
-BOOL checkButton(Button button, pos mouse);
-BOOL click(ALL* allegro, pos mouse, GUIElements* gui, ProgramElements* elements);
-void rightClick(ProgramElements* elements, GUIElements* gui);
+
+
+
+class ProgramCore {
+public:
+	ProgramCore(GUIElements* gui);
+	BOOL eventHandler(ALL* allegro, ProgramElements* elements, GUIElements* gui);
+private:
+	//Initializers
+	BOOL initializeGUIElements(GUIElements* gui);
+	BOOL initializeMenu(GUIElements* gui);
+	//Update Functions
+	void updateButton(Button button, pos mouse);
+	void updateScreen(ALL* allegro, GUIElements* gui, pos mouse, enum ModeEnum modeEnum);
+	void updateModes(GUIElements* gui, pos mouse, enum ModeEnum modeEnum);
+	void updateAllButtons(GUIElements* gui, pos mouse);
+	//Mouse Buttons
+	BOOL checkButton(Button button, pos mouse);
+	BOOL click(ALL* allegro, pos mouse, GUIElements* gui, ProgramElements* elements);
+	void rightClick(ProgramElements* elements, GUIElements* gui);
+	// ------------ Variables -------------------
+	vector<Resistor> resistorArray;
+};
 
 #endif

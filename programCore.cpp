@@ -2,7 +2,13 @@
 #include "programCore.h"
 #define PI 3.14159265358979323846
 
-BOOL eventHandler(ALL* allegro, ProgramElements* elements, GUIElements* gui) {
+ProgramCore::ProgramCore(GUIElements* gui) {
+	if (!initializeGUIElements(gui)) {
+		printf("Error initializing guiElements\n");
+	}
+}
+
+BOOL ProgramCore::eventHandler(ALL* allegro, ProgramElements* elements, GUIElements* gui) {
 	int stillPlaying = TRUE;
 	ALLEGRO_EVENT ev;
 	al_wait_for_event(allegro->events_queue, &ev);
@@ -16,12 +22,12 @@ BOOL eventHandler(ALL* allegro, ProgramElements* elements, GUIElements* gui) {
 		elements->mouse.y = ev.mouse.y;
 	}
 	else if (ev.type == ALLEGRO_EVENT_MOUSE_BUTTON_UP) { 
-		if (ev.mouse.button == 2) {
+		if (ev.mouse.button == 2) { //Right Click
 			rightClick(elements, gui);
 		}
-		else { click(allegro, elements->mouse, gui, elements); }
+		else { click(allegro, elements->mouse, gui, elements); } //Left Click
 	}
-	else if (ev.type == ALLEGRO_EVENT_KEY_UP) {
+	else if (ev.type == ALLEGRO_EVENT_KEY_UP) { //Keyboard
 		switch (ev.keyboard.keycode) {
 		case ALLEGRO_KEY_SPACE:
 			if (gui->resistorAngle == 0) { gui->resistorAngle = PI / 2; }
@@ -36,7 +42,7 @@ BOOL eventHandler(ALL* allegro, ProgramElements* elements, GUIElements* gui) {
 	return stillPlaying;
 }
 //Initializers
-BOOL initializeGUIElements(GUIElements* gui) {
+BOOL ProgramCore::initializeGUIElements(GUIElements* gui) {
 	if (initializeMenu(gui)) {
 		if (gui->resistorButton.buttonImage = al_load_bitmap("Resources/Buttons/resistorButtonImage1.png")) {
 			if (gui->resistorButton.mouseOverButtonImage = al_load_bitmap("Resources/Buttons/resistorButtonImage2.png")) {
@@ -86,7 +92,7 @@ BOOL initializeGUIElements(GUIElements* gui) {
 
 	return FALSE;
 }
-BOOL initializeMenu(GUIElements* gui) {
+BOOL ProgramCore::initializeMenu(GUIElements* gui) {
 	int i = 0;
 	if (gui->menuButtons[0].buttonImage = al_load_bitmap("Resources/Desplegable/DeleteMenu.png")) {
 		if (gui->menuButtons[0].mouseOverButtonImage = al_load_bitmap("Resources/Desplegable/mouseOverDeleteMenu.png")) {
@@ -121,7 +127,7 @@ BOOL initializeMenu(GUIElements* gui) {
 	return FALSE;
 }
 //Update
-void updateScreen(ALL* allegro, GUIElements* gui, pos mouse, enum ModeEnum modeEnum) {
+void ProgramCore::updateScreen(ALL* allegro, GUIElements* gui, pos mouse, enum ModeEnum modeEnum) {
 	int i = 0;
 	al_set_target_backbuffer(allegro->display);
 	al_clear_to_color(al_map_rgb(WHITE));
@@ -131,13 +137,13 @@ void updateScreen(ALL* allegro, GUIElements* gui, pos mouse, enum ModeEnum modeE
 
 	al_flip_display();
 }
-void updateAllButtons(GUIElements* gui, pos mouse) {
+void ProgramCore::updateAllButtons(GUIElements* gui, pos mouse) {
 	updateButton(gui->resistorButton, mouse);
 	updateButton(gui->wireButton, mouse);
 	updateButton(gui->gndButton, mouse);
 	updateButton(gui->vccButton, mouse);
 }
-void updateButton(Button button, pos mouse) {
+void ProgramCore::updateButton(Button button, pos mouse) {
 	if (checkButton(button, mouse)) {
 		al_draw_bitmap(button.mouseOverButtonImage, button.buttonPos.x, button.buttonPos.y, 0);
 	}
@@ -145,7 +151,7 @@ void updateButton(Button button, pos mouse) {
 		al_draw_bitmap(button.buttonImage, button.buttonPos.x, button.buttonPos.y, 0);
 	}
 }
-void updateModes(GUIElements* gui, pos mouse, enum ModeEnum modeEnum) {
+void ProgramCore::updateModes(GUIElements* gui, pos mouse, enum ModeEnum modeEnum) {
 	int i = 0;
 	if (modeEnum == RESISTORPLACE) {
 		if (gui->resistorAngle == 0) {
@@ -161,14 +167,14 @@ void updateModes(GUIElements* gui, pos mouse, enum ModeEnum modeEnum) {
 	else if (modeEnum == VCCPLACE) {
 		al_draw_bitmap(gui->vccImage, mouse.x - al_get_bitmap_width(gui->vccImage) / 2, mouse.y - al_get_bitmap_height(gui->vccImage), 0);
 	}
-	else if (modeEnum == RIGHTCLICK) {
+	else if (modeEnum == RIGHTCLICK) { //If I made right click I have to update the menu over the mouse
 		for (i = 0; i < MENUSIZE; i++) {
 			updateButton(gui->menuButtons[i], mouse);
 		}
 	}
 }
 //Mouse Functions
-BOOL checkButton(Button button, pos mouse) {
+BOOL ProgramCore::checkButton(Button button, pos mouse) {
 	int mouseOverButton = FALSE;
 	if ((mouse.x > button.buttonPos.x) && (mouse.x < button.buttonPos.x + al_get_bitmap_width(button.buttonImage))) {
 		if ((mouse.y > button.buttonPos.y) && (mouse.y < button.buttonPos.y + al_get_bitmap_height(button.buttonImage))) {
@@ -179,7 +185,7 @@ BOOL checkButton(Button button, pos mouse) {
 	else { mouseOverButton = FALSE; }
 	return mouseOverButton;
 }
-BOOL click(ALL* allegro, pos mouse, GUIElements* gui, ProgramElements* elements) {
+BOOL ProgramCore::click(ALL* allegro, pos mouse, GUIElements* gui, ProgramElements* elements) {
 	if (elements->modeEnum == NORMAL) {
 		if (checkButton(gui->resistorButton, mouse)) { elements->modeEnum = RESISTORPLACE;	}
 		else if (checkButton(gui->wireButton, mouse)) { elements->modeEnum = WIREPLACE; }
@@ -191,7 +197,7 @@ BOOL click(ALL* allegro, pos mouse, GUIElements* gui, ProgramElements* elements)
 	}
 	return true;
 }
-void rightClick(ProgramElements* elements, GUIElements* gui) {
+void ProgramCore::rightClick(ProgramElements* elements, GUIElements* gui) {
 	int i = 0;
 	for (i = 0; i < MENUSIZE; i++) {
 		gui->menuButtons[i].buttonPos.x = elements->mouse.x;
