@@ -189,6 +189,7 @@ BOOL click(ALL* allegro, pos mouse, GUIElements* gui, ProgramElements* elements)
 	else if (elements->modeEnum == RESISTORPLACE || elements->modeEnum == WIREPLACE || elements->modeEnum == GNDPLACE || elements->modeEnum == VCCPLACE || elements->modeEnum == RIGHTCLICK) {
 		elements->modeEnum = NORMAL;
 	}
+	return true;
 }
 void rightClick(ProgramElements* elements, GUIElements* gui) {
 	int i = 0;
