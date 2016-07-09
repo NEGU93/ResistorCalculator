@@ -178,6 +178,19 @@ void ProgramCore::updateModes(GUIElements* gui, pos mouse, enum ModeEnum modeEnu
 			updateButton(gui->menuButtons[i], mouse);
 		}
 	}
+	else if (modeEnum == WIREPLACE) {
+		if (selectedResIndex != -1) {
+			pos resTime = resistorArray[selectedResIndex].getCoords();
+			if (resStart == UPPERPART) { al_draw_line(mouse.x, mouse.y, resTime.x, resTime.y, al_map_rgb(BLACK), 1); }
+			else if (resStart == LOWERPART) {
+				if (resistorArray[selectedResIndex].getHoriz()) { al_draw_line(mouse.x, mouse.y, resTime.x + al_get_bitmap_width(gui->resistorImage), resTime.y, al_map_rgb(BLACK), 1); }
+				else { al_draw_line(mouse.x, mouse.y, resTime.x, resTime.y + al_get_bitmap_width(gui->resistorImage), al_map_rgb(BLACK), 1); }
+			}
+		}
+		else if (resStart == NODE) {
+			al_draw_line(vcc.getCorrds().x + al_get_bitmap_width(gui->vccImage) / 2, vcc.getCorrds().y + al_get_bitmap_height(gui->vccImage), mouse.x, mouse.y, al_map_rgb(BLACK), 1);
+		}
+	}
 }
 void ProgramCore::updateResistors(GUIElements* gui) {
 	if (!resistorArray.empty()) {
@@ -185,13 +198,21 @@ void ProgramCore::updateResistors(GUIElements* gui) {
 			resistorArray[i].updateResistor(gui->resistorImage, resistorArray);
 		}
 	}
+	//UpdateNodes
 	vcc.updateNode();
 	gnd.updateNode();
-	if (vcc.getCorrds.x != -1) {
-
+	if (vcc.getIndex() != -1) {
+		pos firstRes = resistorArray[vcc.getIndex()].getCoords();
+		al_draw_line(vcc.getCorrds().x + al_get_bitmap_width(gui->vccImage) / 2, vcc.getCorrds().y + al_get_bitmap_height(gui->vccImage), firstRes.x, firstRes.y, al_map_rgb(BLACK), 1);
 	}
-	if (gnd.getCorrds.x != -1) {
-
+	if (gnd.getIndex() != -1) {
+		pos lastRes = resistorArray[gnd.getIndex()].getCoords();
+		if (resistorArray[gnd.getIndex()].getHoriz()) {
+			al_draw_line(gnd.getCorrds().x + al_get_bitmap_width(gui->gndImage) / 2, gnd.getCorrds().y, lastRes.x + al_get_bitmap_width(gui->resistorImage), lastRes.y, al_map_rgb(BLACK), 1);
+		}
+		else {
+			al_draw_line(gnd.getCorrds().x + al_get_bitmap_width(gui->gndImage) / 2, gnd.getCorrds().y, lastRes.x, lastRes.y + al_get_bitmap_width(gui->resistorImage), al_map_rgb(BLACK), 1);
+		}
 	}
 }
 //Mouse Functions
@@ -282,7 +303,7 @@ void ProgramCore::wired(pos mouse, GUIElements* gui, ProgramElements* elements) 
 				else if (resStart == NODE) { vcc.setIndex(i); }
 				else { cout << "Error, resStart wasn't Lower nor Upper" << endl; } //Normally it should never get here.
 				resStart = NOTOVER;
-				resEnd = NOTOVER;
+				//resEnd = NOTOVER;
 				selectedResIndex = -1;
 				elements->modeEnum = NORMAL;
 			}
@@ -295,6 +316,9 @@ void ProgramCore::wired(pos mouse, GUIElements* gui, ProgramElements* elements) 
 	if (gnd.mouseOverNode(mouse)) {
 		if (resStart != NOTOVER) { 
 			gnd.setIndex(selectedResIndex);
+			elements->modeEnum = NORMAL;
+			resStart = NOTOVER;
+			selectedResIndex = -1;
 		}
 		else { elements->modeEnum = NORMAL; }
 	}

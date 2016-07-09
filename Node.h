@@ -12,10 +12,13 @@ public:
 	Node();
 	Node(ALLEGRO_BITMAP* image);
 	void updateNode();
+	bool mouseOverNode(pos mouse);
+	//Setters
 	void setIndex(int i) { index = i; }
 	void setCoords(int x, int y);
-	bool mouseOverNode(pos mouse);
+	//Getters
 	pos getCorrds() { return nodeCoords; }
+	int getIndex() { return index; }
 private:
 	int index;
 	pos nodeCoords;
