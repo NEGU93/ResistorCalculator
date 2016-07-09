@@ -6,6 +6,11 @@ ProgramCore::ProgramCore(GUIElements* gui) {
 	if (!initializeGUIElements(gui)) {
 		printf("Error initializing guiElements\n");
 	}
+	resEnd = NOTOVER;
+	resStart = NOTOVER;
+	selectedResIndex = -1;
+	vcc = Node(gui->vccImage);
+	gnd = Node(gui->gndImage);
 }
 
 BOOL ProgramCore::eventHandler(ALL* allegro, ProgramElements* elements, GUIElements* gui) {
@@ -177,8 +182,16 @@ void ProgramCore::updateModes(GUIElements* gui, pos mouse, enum ModeEnum modeEnu
 void ProgramCore::updateResistors(GUIElements* gui) {
 	if (!resistorArray.empty()) {
 		for (int i = 0; i < resistorArray.size(); i++) {
-			resistorArray[i].updateResistor(gui->resistorImage);
+			resistorArray[i].updateResistor(gui->resistorImage, resistorArray);
 		}
+	}
+	vcc.updateNode();
+	gnd.updateNode();
+	if (vcc.getCorrds.x != -1) {
+
+	}
+	if (gnd.getCorrds.x != -1) {
+
 	}
 }
 //Mouse Functions
@@ -201,22 +214,88 @@ BOOL ProgramCore::click(ALL* allegro, pos mouse, GUIElements* gui, ProgramElemen
 		else if (checkButton(gui->vccButton, mouse)) { elements->modeEnum = VCCPLACE; }
 	}
 	else if (elements->modeEnum == RESISTORPLACE) {
-		if (gui->resistorAngle == 0) {	resistorArray.push_back(Resistor(true, mouse.x, mouse.y)); 	}
-		else { resistorArray.push_back(Resistor(false, mouse.x, mouse.y)); }
+		Resistor res = Resistor(false, mouse.x, mouse.y);
+		if (gui->resistorAngle == 0) { res.rotate(); }
+		resistorArray.push_back(res);
 		elements->modeEnum = NORMAL;
 	}
-	else if (elements->modeEnum == WIREPLACE || elements->modeEnum == GNDPLACE || elements->modeEnum == VCCPLACE || elements->modeEnum == RIGHTCLICK) {
+	else if (elements->modeEnum == WIREPLACE) {
+		wired(mouse, gui, elements);
+	}
+	else if (elements->modeEnum == VCCPLACE) { 
+		vcc.setCoords(mouse.x - al_get_bitmap_width(gui->vccImage) / 2, mouse.y - al_get_bitmap_height(gui->vccImage));
+		elements->modeEnum = NORMAL;
+	}
+	else if (elements->modeEnum == GNDPLACE) { 
+		gnd.setCoords(mouse.x - al_get_bitmap_width(gui->gndImage) / 2, mouse.y); 
+		elements->modeEnum = NORMAL;
+	}
+	else if (elements->modeEnum == RIGHTCLICK) {
 		elements->modeEnum = NORMAL;
 	}
 	return true;
 }
 void ProgramCore::rightClick(ProgramElements* elements, GUIElements* gui) {
-	int i = 0;
-	for (i = 0; i < MENUSIZE; i++) {
-		gui->menuButtons[i].buttonPos.x = elements->mouse.x;
-		gui->menuButtons[i].buttonPos.y = elements->mouse.y + i * al_get_bitmap_height(gui->menuButtons[i].buttonImage);
+	if (elements->modeEnum == NORMAL) {
+		int i = 0;
+		for (i = 0; i < MENUSIZE; i++) {
+			gui->menuButtons[i].buttonPos.x = elements->mouse.x;
+			gui->menuButtons[i].buttonPos.y = elements->mouse.y + i * al_get_bitmap_height(gui->menuButtons[i].buttonImage);
+		}
+		elements->modeEnum = RIGHTCLICK;
 	}
-	elements->modeEnum = RIGHTCLICK;
-}
+	else if (elements->modeEnum == RESISTORPLACE) {
+		selectedResIndex = -1;
+		resStart = NOTOVER;
+		elements->modeEnum = NORMAL;
+	}
+	else { elements->modeEnum = NORMAL; }
+} 
 
- 
+void ProgramCore::wired(pos mouse, GUIElements* gui, ProgramElements* elements) {
+	for (int i = 0; i < resistorArray.size(); i++) {
+		UpperLowerEnum upperLowerEnum = resistorArray[i].mouseOverRes(gui->resistorImage, mouse);
+		if (upperLowerEnum != NOTOVER) {
+			if (resStart == NOTOVER) {
+				resStart = upperLowerEnum;
+				selectedResIndex = i;
+			}
+			else {
+				//resEnd = upperLowerEnum; //TODO: ESTO NO TIENE SENTIDO, FIJARSE SI SIRVE RESEND.
+				if ((resStart != LOWERPART) || (upperLowerEnum != LOWERPART)) { //Unless closing brotherhood
+					if (resistorArray[i].getFather() != -1) {
+						int last = resistorArray[i].getFather();
+						resistorArray[last].deleteSon();
+						resistorArray[last].deleteBrother();
+					}
+				}
+				resistorArray[i].setFather(selectedResIndex); //If it's NODE it will be the same as delete father.
+				if (resStart == LOWERPART) { 
+					if (upperLowerEnum == LOWERPART) {
+						resistorArray[selectedResIndex].setStepBro(i);
+					}
+					else if (upperLowerEnum == UPPERPART) {
+						resistorArray[selectedResIndex].setSon(i);
+					}
+				}
+				else if (resStart == UPPERPART) { resistorArray[selectedResIndex].setBrother(i); }
+				else if (resStart == NODE) { vcc.setIndex(i); }
+				else { cout << "Error, resStart wasn't Lower nor Upper" << endl; } //Normally it should never get here.
+				resStart = NOTOVER;
+				resEnd = NOTOVER;
+				selectedResIndex = -1;
+				elements->modeEnum = NORMAL;
+			}
+		}
+	}
+	if (vcc.mouseOverNode(mouse)) {
+		if (resStart == NOTOVER) { resStart = NODE; }
+		else { elements->modeEnum = NORMAL; }
+	}
+	if (gnd.mouseOverNode(mouse)) {
+		if (resStart != NOTOVER) { 
+			gnd.setIndex(selectedResIndex);
+		}
+		else { elements->modeEnum = NORMAL; }
+	}
+}

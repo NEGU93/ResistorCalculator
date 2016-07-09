@@ -13,6 +13,8 @@ using namespace std;
 #define TRUE 1
 #define FALSE 0
 
+enum UpperLowerEnum { NOTOVER, UPPERPART, LOWERPART, NODE };
+
 typedef struct {
 	int x;
 	int y;

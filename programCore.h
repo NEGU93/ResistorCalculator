@@ -4,6 +4,7 @@
 #include "allegro.h"
 #include "def.h"
 #include "Resistor.h"
+#include "Node.h"
 
 #define MENUSIZE 4
 
@@ -60,8 +61,15 @@ private:
 	BOOL checkButton(Button button, pos mouse);
 	BOOL click(ALL* allegro, pos mouse, GUIElements* gui, ProgramElements* elements);
 	void rightClick(ProgramElements* elements, GUIElements* gui);
+	//Other Methods
+	void wired(pos mouse, GUIElements* gui, ProgramElements* elements);
 	// ------------ Variables -------------------
 	vector<Resistor> resistorArray;
+	UpperLowerEnum resStart;
+	UpperLowerEnum resEnd;
+	int selectedResIndex;
+	Node vcc;
+	Node gnd;
 };
 
 #endif
