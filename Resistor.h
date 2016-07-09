@@ -13,6 +13,7 @@ public:
 	//TODO: ~Resistor();
 	void updateResistor(ALLEGRO_BITMAP* resistorImage, vector<Resistor> &resistorArray);
 	UpperLowerEnum mouseOverRes(ALLEGRO_BITMAP* resistorImage, pos mouse);
+	void deleteResistor();
 	//Seters
 	void setValue(double value) { this->value = value; }
 	void moveResistor(int x, int y);
@@ -29,8 +30,12 @@ public:
 	//Getters
 	double getValue() { return value; }
 	pos getCoords() { return rPos; }
-	int getFather() { return ptr2father; }
 	bool getHoriz() { return horizontal; }
+		//Pointers
+	int getFather() { return ptr2father; }
+	int getBrother() { return ptr2brother; }
+	int getSon() { return ptr2son; }
+	int getStepBro() { return ptr2stepBro; }
 private:
 	double value;
 	pos rPos;

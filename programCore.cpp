@@ -11,6 +11,8 @@ ProgramCore::ProgramCore(GUIElements* gui) {
 	selectedResIndex = -1;
 	vcc = Node(gui->vccImage);
 	gnd = Node(gui->gndImage);
+	backupPos.x = 0;
+	backupPos.y = 0;
 }
 
 BOOL ProgramCore::eventHandler(ALL* allegro, ProgramElements* elements, GUIElements* gui) {
@@ -25,6 +27,9 @@ BOOL ProgramCore::eventHandler(ALL* allegro, ProgramElements* elements, GUIEleme
 	else if (ev.type == ALLEGRO_EVENT_MOUSE_AXES || ev.type == ALLEGRO_EVENT_MOUSE_ENTER_DISPLAY) {
 		elements->mouse.x = ev.mouse.x;
 		elements->mouse.y = ev.mouse.y;
+		if (elements->modeEnum == MOVEMODE) {
+			resistorArray[selectedResIndex].moveResistor(elements->mouse.x, elements->mouse.y);
+		}
 	}
 	else if (ev.type == ALLEGRO_EVENT_MOUSE_BUTTON_UP) { 
 		if (ev.mouse.button == 2) { //Right Click
@@ -68,8 +73,14 @@ BOOL ProgramCore::initializeGUIElements(GUIElements* gui) {
 										if (gui->resistorImage = al_load_bitmap("Resources/resistor.png")) {
 											if (gui->gndImage = al_load_bitmap("Resources/Ground.png")) {
 												if (gui->vccImage = al_load_bitmap("Resources/connector.png")) {
-													gui->resistorAngle = 0;
-													return TRUE;
+													if (gui->runCalcul.buttonImage = al_load_bitmap("Resources/Buttons/runButtonImage1.png")) {
+														if (gui->runCalcul.mouseOverButtonImage = al_load_bitmap("Resources/Buttons/runButtonImage2.png")) {
+															gui->runCalcul.buttonPos.x = SCREEN_X - al_get_bitmap_width(gui->runCalcul.buttonImage) - al_get_bitmap_width(gui->resistorButton.buttonImage) / 2;
+															gui->runCalcul.buttonPos.y = SCREEN_Y - 2 * al_get_bitmap_height(gui->runCalcul.buttonImage);
+															gui->resistorAngle = 0;
+															return TRUE;
+														}
+													}
 												}
 												else { printf("Unable to load connector Image\n"); }
 											}
@@ -148,6 +159,7 @@ void ProgramCore::updateAllButtons(GUIElements* gui, pos mouse) {
 	updateButton(gui->wireButton, mouse);
 	updateButton(gui->gndButton, mouse);
 	updateButton(gui->vccButton, mouse);
+	if (updateCalculButton()) { updateButton(gui->runCalcul, mouse); }
 }
 void ProgramCore::updateButton(Button button, pos mouse) {
 	if (checkButton(button, mouse)) {
@@ -238,39 +250,85 @@ BOOL ProgramCore::click(ALL* allegro, pos mouse, GUIElements* gui, ProgramElemen
 		Resistor res = Resistor(false, mouse.x, mouse.y);
 		if (gui->resistorAngle == 0) { res.rotate(); }
 		resistorArray.push_back(res);
-		elements->modeEnum = NORMAL;
+		//elements->modeEnum = NORMAL;
 	}
 	else if (elements->modeEnum == WIREPLACE) {
 		wired(mouse, gui, elements);
 	}
 	else if (elements->modeEnum == VCCPLACE) { 
 		vcc.setCoords(mouse.x - al_get_bitmap_width(gui->vccImage) / 2, mouse.y - al_get_bitmap_height(gui->vccImage));
+		vcc.setIndex(-1);
 		elements->modeEnum = NORMAL;
 	}
 	else if (elements->modeEnum == GNDPLACE) { 
 		gnd.setCoords(mouse.x - al_get_bitmap_width(gui->gndImage) / 2, mouse.y); 
+		gnd.setIndex(-1);
 		elements->modeEnum = NORMAL;
 	}
 	else if (elements->modeEnum == RIGHTCLICK) {
+		int i = 0;
+		for (i = 0; i < MENUSIZE; i++) {
+			if (checkButton(gui->menuButtons[i], mouse)) {
+				switch (i) {
+				case 0:	//Delete
+					deleteResistor(selectedResIndex);
+					selectedResIndex = -1;
+					elements->modeEnum = NORMAL;
+					break;
+				case 1:	//Move
+					elements->modeEnum = MOVEMODE;
+					backupPos = resistorArray[selectedResIndex].getCoords();
+					break;
+				case 2: //Rotate
+					resistorArray[selectedResIndex].rotate();
+					selectedResIndex = -1;
+					elements->modeEnum = NORMAL;
+					break;
+				case 3:	//Set Value
+					break;
+				}
+			}
+		}
+		//elements->modeEnum = NORMAL;
+	}
+	else if (elements->modeEnum == MOVEMODE) {
+		resistorArray[selectedResIndex].moveResistor(mouse.x, mouse.y);
 		elements->modeEnum = NORMAL;
+		selectedResIndex = -1;
 	}
 	return true;
 }
 void ProgramCore::rightClick(ProgramElements* elements, GUIElements* gui) {
 	if (elements->modeEnum == NORMAL) {
-		int i = 0;
-		for (i = 0; i < MENUSIZE; i++) {
-			gui->menuButtons[i].buttonPos.x = elements->mouse.x;
-			gui->menuButtons[i].buttonPos.y = elements->mouse.y + i * al_get_bitmap_height(gui->menuButtons[i].buttonImage);
+		for (int j = 0; j < resistorArray.size(); j++) {
+			if (resistorArray[j].mouseOverRes(gui->resistorImage, elements->mouse) != NOTOVER) {
+				selectedResIndex = j;
+				int i = 0;
+				for (i = 0; i < MENUSIZE; i++) {
+					gui->menuButtons[i].buttonPos.x = elements->mouse.x;
+					gui->menuButtons[i].buttonPos.y = elements->mouse.y + i * al_get_bitmap_height(gui->menuButtons[i].buttonImage);
+				}
+				elements->modeEnum = RIGHTCLICK;
+			}
 		}
-		elements->modeEnum = RIGHTCLICK;
 	}
 	else if (elements->modeEnum == RESISTORPLACE) {
 		selectedResIndex = -1;
 		resStart = NOTOVER;
 		elements->modeEnum = NORMAL;
 	}
-	else { elements->modeEnum = NORMAL; }
+	else if (elements->modeEnum == MOVEMODE) {
+		resistorArray[selectedResIndex].moveResistor(backupPos.x, backupPos.y);
+		backupPos.x = 0;
+		backupPos.y = 0;
+		selectedResIndex = -1;
+		elements->modeEnum = NORMAL;
+	}
+	else { 
+		selectedResIndex = -1;
+		resStart = NOTOVER;
+		elements->modeEnum = NORMAL; 
+	}
 } 
 
 void ProgramCore::wired(pos mouse, GUIElements* gui, ProgramElements* elements) {
@@ -284,13 +342,13 @@ void ProgramCore::wired(pos mouse, GUIElements* gui, ProgramElements* elements) 
 			else {
 				//resEnd = upperLowerEnum; //TODO: ESTO NO TIENE SENTIDO, FIJARSE SI SIRVE RESEND.
 				if ((resStart != LOWERPART) || (upperLowerEnum != LOWERPART)) { //Unless closing brotherhood
-					if (resistorArray[i].getFather() != -1) {
+					if (resistorArray[i].getFather() != -1) { //It it ha s another son, leave it.
 						int last = resistorArray[i].getFather();
-						resistorArray[last].deleteSon();
-						resistorArray[last].deleteBrother();
+						if (resistorArray[last].getSon() == i) { resistorArray[last].deleteSon(); }
+						else if (resistorArray[last].getBrother() == i) { resistorArray[last].deleteBrother(); }
 					}
+					resistorArray[i].setFather(selectedResIndex); //If it's NODE it will be the same as delete father.
 				}
-				resistorArray[i].setFather(selectedResIndex); //If it's NODE it will be the same as delete father.
 				if (resStart == LOWERPART) { 
 					if (upperLowerEnum == LOWERPART) {
 						resistorArray[selectedResIndex].setStepBro(i);
@@ -305,7 +363,7 @@ void ProgramCore::wired(pos mouse, GUIElements* gui, ProgramElements* elements) 
 				resStart = NOTOVER;
 				//resEnd = NOTOVER;
 				selectedResIndex = -1;
-				elements->modeEnum = NORMAL;
+				//elements->modeEnum = NORMAL;
 			}
 		}
 	}
@@ -322,4 +380,34 @@ void ProgramCore::wired(pos mouse, GUIElements* gui, ProgramElements* elements) 
 		}
 		else { elements->modeEnum = NORMAL; }
 	}
+}
+bool ProgramCore::updateCalculButton() {
+	int index = gnd.getIndex();
+	if (index != -1) {
+		while (resistorArray[index].getFather() != -1) {
+			index = resistorArray[index].getFather();
+		}
+		if (vcc.getIndex() == index) { return true; }
+	}
+	return false;
+}
+void ProgramCore::deleteResistor(int indexToDelete) {
+	Resistor resistorToDelete = resistorArray[indexToDelete];
+	if (resistorToDelete.getFather() != -1) { //Make sure you leave no broken heart
+		if (resistorArray[resistorToDelete.getFather()].getSon() == indexToDelete) {
+			resistorArray[resistorToDelete.getFather()].deleteSon();
+		}
+		else if (resistorArray[resistorToDelete.getFather()].getBrother() == indexToDelete) {
+			resistorArray[resistorToDelete.getFather()].deleteBrother();
+		}
+		else {
+			cout << "Error, unrecognized child or brother" << endl; //It should never get here
+		}
+	}
+	for (int i = 0; i < resistorArray.size(); i++) {
+		if (resistorArray[i].getStepBro() == indexToDelete) { resistorArray[i].deleteStepBro(); }
+	}
+	//resistorArray[indexToDelete].deleteResistor();
+	//TODO: acomodar los punteros XD
+	resistorArray.erase(resistorArray.begin() + indexToDelete);
 }

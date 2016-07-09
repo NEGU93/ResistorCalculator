@@ -70,3 +70,4 @@ UpperLowerEnum Resistor::mouseOverRes(ALLEGRO_BITMAP* resistorImage, pos mouse) 
 	}
 	return ans;
 }
+void Resistor::deleteResistor() {}
