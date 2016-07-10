@@ -46,14 +46,6 @@ public:
 	ProgramCore(GUIElements* gui);
 	BOOL eventHandler(ALL* allegro, ProgramElements* elements, GUIElements* gui);
 private:
-	// Resistor Manipulation
-	void wired(pos mouse, GUIElements* gui, ProgramElements* elements);
-	void deleteResistor(int indexToDelete);
-	bool startCalculation(ALL* allegro, GUIElements* gui, pos mouse, enum ModeEnum modeEnum);
-	double calculate(int index, ALL* allegro, GUIElements* gui, pos mouse, enum ModeEnum modeEnum);
-	void getSeries(int index, ALL* allegro, GUIElements* gui, pos mouse, enum ModeEnum modeEnum);
-	void getParallel(int index, ALL* allegro, GUIElements* gui, pos mouse, enum ModeEnum modeEnum);
-	void reorder(int indexToDelete);
 	// Initializers
 	BOOL initializeGUIElements(GUIElements* gui);
 	BOOL initializeMenu(GUIElements* gui);
@@ -63,11 +55,21 @@ private:
 	void updateModes(GUIElements* gui, pos mouse, enum ModeEnum modeEnum);
 	void updateAllButtons(GUIElements* gui, pos mouse);
 	void updateResistors(GUIElements* gui, ALLEGRO_FONT *font);
+	void updateTextMode(ALLEGRO_FONT *font, int x, int y, enum ModeEnum modeEnum);
 	bool updateCalculButton();
 	// Mouse Buttons
 	BOOL checkButton(Button button, pos mouse);
 	BOOL click(ALL* allegro, pos mouse, GUIElements* gui, ProgramElements* elements);
 	void rightClick(ProgramElements* elements, GUIElements* gui);
+	// Main Calculation
+	bool startCalculation(ALL* allegro, GUIElements* gui, pos mouse, enum ModeEnum modeEnum);
+	double calculate(int index, ALL* allegro, GUIElements* gui, pos mouse, enum ModeEnum modeEnum);
+	void getSeries(int index, ALL* allegro, GUIElements* gui, pos mouse, enum ModeEnum modeEnum);
+	void getParallel(int index, ALL* allegro, GUIElements* gui, pos mouse, enum ModeEnum modeEnum);
+	// Resistor Manipulation
+	void wired(pos mouse, GUIElements* gui, ProgramElements* elements);
+	void deleteResistor(int indexToDelete);
+	void reorder(int indexToDelete);
 	
 	// ------------ Variables -------------------
 	vector<Resistor> resistorArray;

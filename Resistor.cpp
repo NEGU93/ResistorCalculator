@@ -23,23 +23,27 @@ void Resistor::updateResistor(ALLEGRO_BITMAP* resistorImage, vector<Resistor> &r
 	//Draw lines.
 	if (ptr2son != -1) {
 		pos sonPos = resistorArray[ptr2son].getCoords();
-		if (horizontal) { al_draw_line(rPos.x + al_get_bitmap_width(resistorImage), rPos.y, sonPos.x, sonPos.y, al_map_rgb(BLACK), LINEWIDTH); }
-		else { al_draw_line(rPos.x, rPos.y + al_get_bitmap_width(resistorImage), sonPos.x, sonPos.y, al_map_rgb(BLACK), LINEWIDTH); }
+		if (horizontal) { 
+			draw_line(rPos.x + al_get_bitmap_width(resistorImage), rPos.y, sonPos.x, sonPos.y, al_map_rgb(LINECOLOUR), LINEWIDTH); 
+		}
+		else { 
+			draw_line(rPos.x, rPos.y + al_get_bitmap_width(resistorImage), sonPos.x, sonPos.y, al_map_rgb(LINECOLOUR), LINEWIDTH); 
+		}
 	}
 	if (ptr2brother != -1) {
 		pos broPos = resistorArray[ptr2brother].getCoords();
-		al_draw_line(rPos.x, rPos.y, broPos.x, broPos.y, al_map_rgb(BLACK), LINEWIDTH);
+		draw_line(rPos.x, rPos.y, broPos.x, broPos.y, al_map_rgb(LINECOLOUR), LINEWIDTH);
 	}
 	if (ptr2stepBro != -1) {
 		pos broPos = resistorArray[ptr2stepBro].getCoords();
 		bool broHorizontal = resistorArray[ptr2stepBro].getHoriz();
 		if (horizontal) { 
-			if (broHorizontal) { al_draw_line(rPos.x + al_get_bitmap_width(resistorImage), rPos.y, broPos.x + al_get_bitmap_width(resistorImage), broPos.y, al_map_rgb(BLACK), LINEWIDTH); }
-			else { al_draw_line(rPos.x + al_get_bitmap_width(resistorImage), rPos.y, broPos.x, broPos.y + al_get_bitmap_width(resistorImage), al_map_rgb(BLACK), LINEWIDTH); }
+			if (broHorizontal) { draw_line(rPos.x + al_get_bitmap_width(resistorImage), rPos.y, broPos.x + al_get_bitmap_width(resistorImage), broPos.y, al_map_rgb(LINECOLOUR), LINEWIDTH); }
+			else { draw_line(rPos.x + al_get_bitmap_width(resistorImage), rPos.y, broPos.x, broPos.y + al_get_bitmap_width(resistorImage), al_map_rgb(LINECOLOUR), LINEWIDTH); }
 		}
 		else { 
-			if (broHorizontal) { al_draw_line(rPos.x, rPos.y + al_get_bitmap_width(resistorImage), broPos.x + al_get_bitmap_width(resistorImage), broPos.y, al_map_rgb(BLACK), LINEWIDTH); }
-			else { al_draw_line(rPos.x, rPos.y + al_get_bitmap_width(resistorImage), broPos.x , broPos.y + al_get_bitmap_width(resistorImage), al_map_rgb(BLACK), LINEWIDTH); }
+			if (broHorizontal) { draw_line(rPos.x, rPos.y + al_get_bitmap_width(resistorImage), broPos.x + al_get_bitmap_width(resistorImage), broPos.y, al_map_rgb(LINECOLOUR), LINEWIDTH); }
+			else { draw_line(rPos.x, rPos.y + al_get_bitmap_width(resistorImage), broPos.x , broPos.y + al_get_bitmap_width(resistorImage), al_map_rgb(LINECOLOUR), LINEWIDTH); }
 		}
 	}
 }
@@ -72,3 +76,4 @@ UpperLowerEnum Resistor::mouseOverRes(ALLEGRO_BITMAP* resistorImage, pos mouse) 
 	return ans;
 }
 void Resistor::deleteResistor() {}
+

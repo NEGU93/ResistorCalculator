@@ -153,7 +153,7 @@ void ProgramCore::updateScreen(ALL* allegro, GUIElements* gui, pos mouse, enum M
 	updateResistors(gui, allegro->font);
 	updateAllButtons(gui, mouse);
 	updateModes(gui, mouse, modeEnum);
-	al_draw_text(allegro->font, al_map_rgb(BLACK), 20, allegro->screenHeight - 20, ALLEGRO_ALIGN_LEFT, "Resistor Calculator Beta Version 1.0");
+	updateTextMode(allegro->font, 20, allegro->screenHeight - 20, modeEnum);
 	al_flip_display();
 }
 void ProgramCore::updateAllButtons(GUIElements* gui, pos mouse) {
@@ -195,14 +195,14 @@ void ProgramCore::updateModes(GUIElements* gui, pos mouse, enum ModeEnum modeEnu
 	else if (modeEnum == WIREPLACE) {
 		if (selectedResIndex != -1) {
 			pos resTime = resistorArray[selectedResIndex].getCoords();
-			if (resStart == UPPERPART) { al_draw_line(mouse.x, mouse.y, resTime.x, resTime.y, al_map_rgb(BLACK), LINEWIDTH); }
+			if (resStart == UPPERPART) { draw_line(mouse.x, mouse.y, resTime.x, resTime.y, al_map_rgb(LINECOLOUR), LINEWIDTH); }
 			else if (resStart == LOWERPART) {
-				if (resistorArray[selectedResIndex].getHoriz()) { al_draw_line(mouse.x, mouse.y, resTime.x + al_get_bitmap_width(gui->resistorImage), resTime.y, al_map_rgb(BLACK), LINEWIDTH); }
-				else { al_draw_line(mouse.x, mouse.y, resTime.x, resTime.y + al_get_bitmap_width(gui->resistorImage), al_map_rgb(BLACK), LINEWIDTH); }
+				if (resistorArray[selectedResIndex].getHoriz()) { draw_line(mouse.x, mouse.y, resTime.x + al_get_bitmap_width(gui->resistorImage), resTime.y, al_map_rgb(LINECOLOUR), LINEWIDTH); }
+				else { draw_line(mouse.x, mouse.y, resTime.x, resTime.y + al_get_bitmap_width(gui->resistorImage), al_map_rgb(LINECOLOUR), LINEWIDTH); }
 			}
 		}
 		else if (resStart == NODE) {
-			al_draw_line(vcc.getCorrds().x + al_get_bitmap_width(gui->vccImage) / 2, vcc.getCorrds().y + al_get_bitmap_height(gui->vccImage), mouse.x, mouse.y, al_map_rgb(BLACK), LINEWIDTH);
+			draw_line(vcc.getCorrds().x + al_get_bitmap_width(gui->vccImage) / 2, vcc.getCorrds().y + al_get_bitmap_height(gui->vccImage), mouse.x, mouse.y, al_map_rgb(LINECOLOUR), LINEWIDTH);
 		}
 	}
 }
@@ -217,16 +217,41 @@ void ProgramCore::updateResistors(GUIElements* gui, ALLEGRO_FONT *font) {
 	gnd.updateNode();
 	if (vcc.getIndex() != -1) {
 		pos firstRes = resistorArray[vcc.getIndex()].getCoords();
-		al_draw_line(vcc.getCorrds().x + al_get_bitmap_width(gui->vccImage) / 2, vcc.getCorrds().y + al_get_bitmap_height(gui->vccImage), firstRes.x, firstRes.y, al_map_rgb(BLACK), LINEWIDTH);
+		draw_line(vcc.getCorrds().x + al_get_bitmap_width(gui->vccImage) / 2, vcc.getCorrds().y + al_get_bitmap_height(gui->vccImage), firstRes.x, firstRes.y, al_map_rgb(LINECOLOUR), LINEWIDTH);
 	}
 	if (gnd.getIndex() != -1) {
 		pos lastRes = resistorArray[gnd.getIndex()].getCoords();
 		if (resistorArray[gnd.getIndex()].getHoriz()) {
-			al_draw_line(gnd.getCorrds().x + al_get_bitmap_width(gui->gndImage) / 2, gnd.getCorrds().y, lastRes.x + al_get_bitmap_width(gui->resistorImage), lastRes.y, al_map_rgb(BLACK), LINEWIDTH);
+			draw_line(gnd.getCorrds().x + al_get_bitmap_width(gui->gndImage) / 2, gnd.getCorrds().y, lastRes.x + al_get_bitmap_width(gui->resistorImage), lastRes.y, al_map_rgb(LINECOLOUR), LINEWIDTH);
 		}
 		else {
-			al_draw_line(gnd.getCorrds().x + al_get_bitmap_width(gui->gndImage) / 2, gnd.getCorrds().y, lastRes.x, lastRes.y + al_get_bitmap_width(gui->resistorImage), al_map_rgb(BLACK), LINEWIDTH);
+			draw_line(gnd.getCorrds().x + al_get_bitmap_width(gui->gndImage) / 2, gnd.getCorrds().y, lastRes.x, lastRes.y + al_get_bitmap_width(gui->resistorImage), al_map_rgb(LINECOLOUR), LINEWIDTH);
 		}
+	}
+}
+void ProgramCore::updateTextMode(ALLEGRO_FONT *font, int x, int y, enum ModeEnum modeEnum) {
+	switch (modeEnum) {
+	case NORMAL:
+		al_draw_text(font, al_map_rgb(BLACK), x, y, ALLEGRO_ALIGN_LEFT, "Resistor Calculator Beta 1.0");
+		break;
+	case MOVEMODE:
+		al_draw_text(font, al_map_rgb(BLACK), x, y, ALLEGRO_ALIGN_LEFT, "Move your Resistor");
+		break;
+	case RIGHTCLICK:
+		al_draw_text(font, al_map_rgb(BLACK), x, y, ALLEGRO_ALIGN_LEFT, "Select Option");
+		break;
+	case RESISTORPLACE:
+		al_draw_text(font, al_map_rgb(BLACK), x, y, ALLEGRO_ALIGN_LEFT, "Place Resistor");
+		break;
+	case WIREPLACE:
+		al_draw_text(font, al_map_rgb(BLACK), x, y, ALLEGRO_ALIGN_LEFT, "Wire Mode");
+		break;
+	case GNDPLACE:
+		al_draw_text(font, al_map_rgb(BLACK), x, y, ALLEGRO_ALIGN_LEFT, "Place GND");
+		break;
+	case VCCPLACE:
+		al_draw_text(font, al_map_rgb(BLACK), x, y, ALLEGRO_ALIGN_LEFT, "Place VCC");
+		break;
 	}
 }
 //Mouse Functions
@@ -354,7 +379,7 @@ void ProgramCore::wired(pos mouse, GUIElements* gui, ProgramElements* elements) 
 				}
 				if (resStart == LOWERPART) { 
 					if (upperLowerEnum == LOWERPART) {
-						resistorArray[selectedResIndex].setStepBro(i);
+						//resistorArray[selectedResIndex].setStepBro(i);
 						resistorArray[i].setStepBro(selectedResIndex);
 					}
 					else if (upperLowerEnum == UPPERPART) {
@@ -378,7 +403,7 @@ void ProgramCore::wired(pos mouse, GUIElements* gui, ProgramElements* elements) 
 	if (gnd.mouseOverNode(mouse)) {
 		if (resStart != NOTOVER) { 
 			gnd.setIndex(selectedResIndex);
-			elements->modeEnum = NORMAL;
+			//elements->modeEnum = NORMAL;
 			resStart = NOTOVER;
 			selectedResIndex = -1;
 		}
@@ -433,6 +458,7 @@ void ProgramCore::reorder(int indexToDelete) {
 		if (resistorArray[i].getStepBro() > indexToDelete) { resistorArray[i].decreseStepBro(); }
 	}
 }
+
 bool ProgramCore::startCalculation(ALL* allegro, GUIElements* gui, pos mouse, enum ModeEnum modeEnum) {
 	double ans = calculate(vcc.getIndex(), allegro, gui, mouse, modeEnum); //If I got here I already checked vcc points the correct one and that I have a limit.
 	return true;
@@ -457,10 +483,6 @@ double ProgramCore::calculate(int index, ALL* allegro, GUIElements* gui, pos mou
 }
 void ProgramCore::getSeries(int index, ALL* allegro, GUIElements* gui, pos mouse, enum ModeEnum modeEnum) {
 	resistorArray[index].setValue(resistorArray[index].getValue() + calculate(resistorArray[index].getSon(), allegro, gui, mouse, modeEnum));
-	/*if (resistorArray[resistorArray[index].getSon()].getSon() != -1) {	//If the res series had a son
-		resistorArray[index].setSon(resistorArray[index].getSon());
-		resistorArray[resistorArray[index].getSon()].setFather(index);
-	}*/
 	if (resistorArray[resistorArray[index].getSon()].getStepBro() != -1) { 
 		resistorArray[index].setStepBro( resistorArray[resistorArray[index].getSon()].getStepBro() );
 		resistorArray[resistorArray[index].getSon()].deleteStepBro();
