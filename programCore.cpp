@@ -8,7 +8,6 @@ ProgramCore::ProgramCore(GUIElements* gui) {
 	if (!initializeGUIElements(gui)) {
 		printf("Error initializing guiElements\n");
 	}
-	resEnd = NOTOVER;
 	resStart = NOTOVER;
 	selectedResIndex = -1;
 	vcc = Node(gui->vccImage);
@@ -256,7 +255,17 @@ void ProgramCore::updateTextMode(ALLEGRO_FONT *font, int x, int y, enum ModeEnum
 		break;
 	}
 }
-//Mouse Functions
+bool ProgramCore::updateCalculButton() {
+	int index = gnd.getIndex();
+	if (index != -1) {
+		while (resistorArray[index].getFather() != -1) {
+			index = resistorArray[index].getFather();
+		}
+		if (vcc.getIndex() == index) { return true; }
+	}
+	return false;
+}
+// Mouse Functions
 BOOL ProgramCore::checkButton(Button button, pos mouse) {
 	int mouseOverButton = FALSE;
 	if ((mouse.x > button.buttonPos.x) && (mouse.x < button.buttonPos.x + al_get_bitmap_width(button.buttonImage))) {
@@ -362,6 +371,7 @@ void ProgramCore::rightClick(ProgramElements* elements, GUIElements* gui) {
 } 
 
 void ProgramCore::wired(pos mouse, GUIElements* gui, ProgramElements* elements) {
+	// This function is used wile conecting resistors with each other.
 	for (int i = 0; i < resistorArray.size(); i++) {
 		UpperLowerEnum upperLowerEnum = resistorArray[i].mouseOverRes(gui->resistorImage, mouse);
 		if (upperLowerEnum != NOTOVER) {
@@ -370,18 +380,18 @@ void ProgramCore::wired(pos mouse, GUIElements* gui, ProgramElements* elements) 
 				selectedResIndex = i;
 			}
 			else {
-				//resEnd = upperLowerEnum; //TODO: ESTO NO TIENE SENTIDO, FIJARSE SI SIRVE RESEND.
 				if ((resStart != LOWERPART) || (upperLowerEnum != LOWERPART)) { //Unless closing brotherhood
-					if (resistorArray[i].getFather() != -1) { //It it ha s another son, leave it.
+					if (resistorArray[i].getFather() != -1) { //It it has another son, leave it.
 						int last = resistorArray[i].getFather();
 						if (resistorArray[last].getSon() == i) { resistorArray[last].deleteSon(); }
 						else if (resistorArray[last].getBrother() == i) { resistorArray[last].deleteBrother(); }
 					}
+					else { if (vcc.getIndex() == i) { vcc.setIndex(-1); } }
 					resistorArray[i].setFather(selectedResIndex); //If it's NODE it will be the same as delete father.
 				}
 				if (resStart == LOWERPART) { 
 					if (upperLowerEnum == LOWERPART) {
-						//resistorArray[selectedResIndex].setStepBro(i);
+						resistorArray[selectedResIndex].setStepBro(i);
 						resistorArray[i].setStepBro(selectedResIndex);
 					}
 					else if (upperLowerEnum == UPPERPART) {
@@ -392,7 +402,6 @@ void ProgramCore::wired(pos mouse, GUIElements* gui, ProgramElements* elements) 
 				else if (resStart == NODE) { vcc.setIndex(i); }
 				else { cout << "Error, resStart wasn't Lower nor Upper" << endl; } //Normally it should never get here.
 				resStart = NOTOVER;
-				//resEnd = NOTOVER;
 				selectedResIndex = -1;
 				//elements->modeEnum = NORMAL;
 			}
@@ -412,26 +421,39 @@ void ProgramCore::wired(pos mouse, GUIElements* gui, ProgramElements* elements) 
 		else { elements->modeEnum = NORMAL; }
 	}
 }
-bool ProgramCore::updateCalculButton() {
-	int index = gnd.getIndex();
-	if (index != -1) {
-		while (resistorArray[index].getFather() != -1) {
-			index = resistorArray[index].getFather();
-		}
-		if (vcc.getIndex() == index) { return true; }
-	}
-	return false;
-}
+
+// Deletion Process
 void ProgramCore::deleteResistor(int indexToDelete) {
+	deletePointersOfandFrom(indexToDelete);
+	reorder(indexToDelete);
+	resistorArray.erase(resistorArray.begin() + indexToDelete);
+}
+void ProgramCore::reorder(int indexToDelete) {
+	/* Reorder Its previous the deletion of a resistor. 
+	If I delete a resistor the vector will now have a size lower, so all pointers of index higher than the index deleted will have to be reduced in one.
+	This function takes care of that.
+	It changes all the pointers of other resistors in order to face the deletion of a resistor in vector and have no problem.
+	*/
+	if (gnd.getIndex() > indexToDelete) { gnd.decreseIndex(); }
+	if (vcc.getIndex() > indexToDelete) { vcc.decreseIndex(); }
+	for (int i = 0; i < resistorArray.size(); i++) {
+		if (resistorArray[i].getBrother() > indexToDelete) { resistorArray[i].decreseBrother(); }
+		if (resistorArray[i].getFather() > indexToDelete) { resistorArray[i].decreseFather(); }
+		if (resistorArray[i].getSon() > indexToDelete) { resistorArray[i].decreseSon(); }
+		if (resistorArray[i].getStepBro() > indexToDelete) { resistorArray[i].decreseStepBro(); }
+	}
+}
+void ProgramCore::deletePointersOfandFrom(int indexToDelete) {
+	/* This function receives the index of the resistor to delete and eliminates all pointers to that resistor and from that resistor to have no problems. */
 	Resistor resistorToDelete = resistorArray[indexToDelete];
-	if (resistorToDelete.getFather() != -1) { //Make sure you leave no broken heart
-		if (resistorArray[resistorToDelete.getFather()].getSon() == indexToDelete) {
+	if (resistorToDelete.getFather() != -1) { //IT has a father?
+		if (resistorArray[resistorToDelete.getFather()].getSon() == indexToDelete) {	//It's his son?
 			resistorArray[resistorToDelete.getFather()].deleteSon();
 		}
-		else if (resistorArray[resistorToDelete.getFather()].getBrother() == indexToDelete) {
+		else if (resistorArray[resistorToDelete.getFather()].getBrother() == indexToDelete) {	//Or it's his brother?
 			resistorArray[resistorToDelete.getFather()].deleteBrother();
 		}
-		else {
+		else {	//It must be father or son... So this option should never run.
 			cout << "Error, unrecognized child or brother" << endl; //It should never get here
 		}
 	}
@@ -444,35 +466,25 @@ void ProgramCore::deleteResistor(int indexToDelete) {
 	for (int i = 0; i < resistorArray.size(); i++) {
 		if (resistorArray[i].getStepBro() == indexToDelete) { resistorArray[i].deleteStepBro(); }
 	}
-	//resistorArray[indexToDelete].deleteResistor();
-	reorder(indexToDelete);
-	resistorArray.erase(resistorArray.begin() + indexToDelete);
-}
-void ProgramCore::reorder(int indexToDelete) {
-	if (gnd.getIndex() > indexToDelete) { gnd.decreseIndex(); }
-	else if (gnd.getIndex() == indexToDelete) { gnd.setIndex(-1); }
-	if (vcc.getIndex() > indexToDelete) { vcc.decreseIndex(); }
-	else if (vcc.getIndex() == indexToDelete) { vcc.setIndex(-1); }
-	for (int i = 0; i < resistorArray.size(); i++) {
-		if (resistorArray[i].getBrother() > indexToDelete) { resistorArray[i].decreseBrother(); }
-		if (resistorArray[i].getFather() > indexToDelete) { resistorArray[i].decreseFather(); }
-		if (resistorArray[i].getSon() > indexToDelete) { resistorArray[i].decreseSon(); }
-		if (resistorArray[i].getStepBro() > indexToDelete) { resistorArray[i].decreseStepBro(); }
-	}
+	if (gnd.getIndex() == indexToDelete) { gnd.setIndex(-1); } //Does GND or VCC target the resistor?
+	if (vcc.getIndex() == indexToDelete) { vcc.setIndex(-1); }
 }
 
+// Calculus Functions
 bool ProgramCore::startCalculation(ALL* allegro, GUIElements* gui, pos mouse, enum ModeEnum modeEnum) {
 	double ans = calculate(vcc.getIndex(), allegro, gui, mouse, modeEnum); //If I got here I already checked vcc points the correct one and that I have a limit.
 	return true;
 }
 double ProgramCore::calculate(int index, ALL* allegro, GUIElements* gui, pos mouse, enum ModeEnum modeEnum) {
+	//Debería haber un chequeo del step Bro y devolver de una. Cuidado con mover bien los punteros en ese caso.
 	if (resistorArray[index].getBrother() != -1) { //Have Brother
-		while (resistorArray[index].getStepBro() == -1) {
+		while (resistorArray[index].getStepBro() == -1) { // This must be done until the parallel is only with the resistor now using. 
+		//TODO: work on this. En realidad se ceba y calcula todo de una y le chupa un huevo todo.
 			getSeries(index, allegro, gui, mouse, modeEnum);
 			updateScreen(allegro, gui, mouse, modeEnum);
 			Sleep(TIMEPAUSE);
 		}
-		getParallel(index, allegro, gui, mouse, modeEnum);
+		getParallel(index, allegro, gui, mouse, modeEnum);	//Now that the resistor has only one thing (can be lots of other resistors) in parallel, I get it.
 		updateScreen(allegro, gui, mouse, modeEnum);
 		Sleep(TIMEPAUSE);
 	}
@@ -484,17 +496,18 @@ double ProgramCore::calculate(int index, ALL* allegro, GUIElements* gui, pos mou
 	return resistorArray[index].getValue();
 }
 void ProgramCore::getSeries(int index, ALL* allegro, GUIElements* gui, pos mouse, enum ModeEnum modeEnum) {
-	resistorArray[index].setValue(resistorArray[index].getValue() + calculate(resistorArray[index].getSon(), allegro, gui, mouse, modeEnum));
-	if (resistorArray[resistorArray[index].getSon()].getStepBro() != -1) { 
+	resistorArray[index].setValue(resistorArray[index].getValue() + calculate(resistorArray[index].getSon(), allegro, gui, mouse, modeEnum)); //Get the series.
+	if (resistorArray[resistorArray[index].getSon()].getStepBro() != -1) {	//If his son had a Step Bro. This step Bro thould be taken to the father to close the loop
 		resistorArray[index].setStepBro( resistorArray[resistorArray[index].getSon()].getStepBro() );
 		resistorArray[resistorArray[index].getSon()].deleteStepBro();
 	}
-	if (resistorArray[index].getSon() == gnd.getIndex()) { gnd.setIndex(index); }
+	if (resistorArray[index].getSon() == gnd.getIndex()) { gnd.setIndex(index); } //If son was targeted bu gnd, Then now gnd should target the father.
 	deleteResistor(resistorArray[index].getSon());
 }
 void ProgramCore::getParallel(int index, ALL* allegro, GUIElements* gui, pos mouse, enum ModeEnum modeEnum) {
-	double broCalculate = calculate(resistorArray[index].getBrother(), allegro, gui, mouse, modeEnum);
-	resistorArray[index].setValue((resistorArray[index].getValue() * broCalculate) / (resistorArray[index].getValue() + broCalculate));
-	if (resistorArray[index].getBrother() == gnd.getIndex()) { gnd.setIndex(index); }
+	//TODO: nunca se fija si es stepBro o no... demasiada confianza.
+	double broCalculate = calculate(resistorArray[index].getBrother(), allegro, gui, mouse, modeEnum); //Get the brother in parallel.
+	resistorArray[index].setValue((resistorArray[index].getValue() * broCalculate) / (resistorArray[index].getValue() + broCalculate)); // Caclulate parallel
+	if (resistorArray[index].getBrother() == gnd.getIndex()) { gnd.setIndex(index); }	//Before deletion, I change the gnd to the principal index just in case this parallel had the gnd in it.
 	deleteResistor(resistorArray[index].getBrother());
 }

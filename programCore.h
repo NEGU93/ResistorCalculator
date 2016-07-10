@@ -68,8 +68,10 @@ private:
 	void getParallel(int index, ALL* allegro, GUIElements* gui, pos mouse, enum ModeEnum modeEnum);
 	// Resistor Manipulation
 	void wired(pos mouse, GUIElements* gui, ProgramElements* elements);
+	//Deletion Process
 	void deleteResistor(int indexToDelete);
 	void reorder(int indexToDelete);
+	void deletePointersOfandFrom(int indexToDelete);
 	
 	// ------------ Variables -------------------
 	vector<Resistor> resistorArray;
@@ -78,8 +80,6 @@ private:
 	int selectedResIndex;
 	pos backupPos;
 	UpperLowerEnum resStart;
-	UpperLowerEnum resEnd;
-
 };
 
 #endif
