@@ -1,5 +1,7 @@
 //#include <math.h>
 #include "programCore.h"
+#include <stdlib.h>
+#define TIMEPAUSE 1000
 #define PI 3.14159265358979323846
 
 ProgramCore::ProgramCore(GUIElements* gui) {
@@ -245,7 +247,7 @@ BOOL ProgramCore::click(ALL* allegro, pos mouse, GUIElements* gui, ProgramElemen
 		else if (checkButton(gui->wireButton, mouse)) { elements->modeEnum = WIREPLACE; }
 		else if (checkButton(gui->gndButton, mouse)) { elements->modeEnum = GNDPLACE; }
 		else if (checkButton(gui->vccButton, mouse)) { elements->modeEnum = VCCPLACE; }
-		if (updateCalculButton() && checkButton(gui->runCalcul, mouse)) { startCalculation(); }
+		if (updateCalculButton() && checkButton(gui->runCalcul, mouse)) { startCalculation(allegro, gui, mouse, elements->modeEnum); }
 	}
 	else if (elements->modeEnum == RESISTORPLACE) {
 		Resistor res = Resistor(false, mouse.x, mouse.y);
@@ -353,6 +355,7 @@ void ProgramCore::wired(pos mouse, GUIElements* gui, ProgramElements* elements) 
 				if (resStart == LOWERPART) { 
 					if (upperLowerEnum == LOWERPART) {
 						resistorArray[selectedResIndex].setStepBro(i);
+						resistorArray[i].setStepBro(selectedResIndex);
 					}
 					else if (upperLowerEnum == UPPERPART) {
 						resistorArray[selectedResIndex].setSon(i);
@@ -430,23 +433,44 @@ void ProgramCore::reorder(int indexToDelete) {
 		if (resistorArray[i].getStepBro() > indexToDelete) { resistorArray[i].decreseStepBro(); }
 	}
 }
-bool ProgramCore::startCalculation() {
-	double ans = calculate(vcc.getIndex()); //If I got here I already checked vcc points the correct one and that I have a limit.
+bool ProgramCore::startCalculation(ALL* allegro, GUIElements* gui, pos mouse, enum ModeEnum modeEnum) {
+	double ans = calculate(vcc.getIndex(), allegro, gui, mouse, modeEnum); //If I got here I already checked vcc points the correct one and that I have a limit.
 	return true;
 }
-double ProgramCore::calculate(int index) {
+double ProgramCore::calculate(int index, ALL* allegro, GUIElements* gui, pos mouse, enum ModeEnum modeEnum) {
 	if (resistorArray[index].getBrother() != -1) { //Have Brother
-		if (resistorArray[index].getBrother() == resistorArray[index].getStepBro()) {
-			double broCalculate = calculate(resistorArray[index].getBrother());
-			resistorArray[index].setValue( (resistorArray[index].getValue() * broCalculate) / ( resistorArray[index].getValue() + broCalculate) );
-			//if(resistorArray[index].getBrother())
-			deleteResistor(resistorArray[index].getBrother());
+		while (resistorArray[index].getStepBro() == -1) {
+			getSeries(index, allegro, gui, mouse, modeEnum);
+			updateScreen(allegro, gui, mouse, modeEnum);
+			Sleep(TIMEPAUSE);
 		}
+		getParallel(index, allegro, gui, mouse, modeEnum);
+		updateScreen(allegro, gui, mouse, modeEnum);
+		Sleep(TIMEPAUSE);
 	}
-	if (resistorArray[index].getSon() != -1) { //Have Son but no brother
-		return resistorArray[index].getValue() + calculate(resistorArray[index].getSon());
+	if (resistorArray[index].getSon() != -1) { //Have Son
+		getSeries(index, allegro, gui, mouse, modeEnum);
+		updateScreen(allegro, gui, mouse, modeEnum);
+		Sleep(TIMEPAUSE);
 	}
-	else {
-		return resistorArray[index].getValue();
+	return resistorArray[index].getValue();
+}
+void ProgramCore::getSeries(int index, ALL* allegro, GUIElements* gui, pos mouse, enum ModeEnum modeEnum) {
+	resistorArray[index].setValue(resistorArray[index].getValue() + calculate(resistorArray[index].getSon(), allegro, gui, mouse, modeEnum));
+	/*if (resistorArray[resistorArray[index].getSon()].getSon() != -1) {	//If the res series had a son
+		resistorArray[index].setSon(resistorArray[index].getSon());
+		resistorArray[resistorArray[index].getSon()].setFather(index);
+	}*/
+	if (resistorArray[resistorArray[index].getSon()].getStepBro() != -1) { 
+		resistorArray[index].setStepBro( resistorArray[resistorArray[index].getSon()].getStepBro() );
+		resistorArray[resistorArray[index].getSon()].deleteStepBro();
 	}
+	if (resistorArray[index].getSon() == gnd.getIndex()) { gnd.setIndex(index); }
+	deleteResistor(resistorArray[index].getSon());
+}
+void ProgramCore::getParallel(int index, ALL* allegro, GUIElements* gui, pos mouse, enum ModeEnum modeEnum) {
+	double broCalculate = calculate(resistorArray[index].getBrother(), allegro, gui, mouse, modeEnum);
+	resistorArray[index].setValue((resistorArray[index].getValue() * broCalculate) / (resistorArray[index].getValue() + broCalculate));
+	if (resistorArray[index].getBrother() == gnd.getIndex()) { gnd.setIndex(index); }
+	deleteResistor(resistorArray[index].getBrother());
 }

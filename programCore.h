@@ -49,8 +49,10 @@ private:
 	// Resistor Manipulation
 	void wired(pos mouse, GUIElements* gui, ProgramElements* elements);
 	void deleteResistor(int indexToDelete);
-	bool startCalculation();
-	double calculate(int index);
+	bool startCalculation(ALL* allegro, GUIElements* gui, pos mouse, enum ModeEnum modeEnum);
+	double calculate(int index, ALL* allegro, GUIElements* gui, pos mouse, enum ModeEnum modeEnum);
+	void getSeries(int index, ALL* allegro, GUIElements* gui, pos mouse, enum ModeEnum modeEnum);
+	void getParallel(int index, ALL* allegro, GUIElements* gui, pos mouse, enum ModeEnum modeEnum);
 	void reorder(int indexToDelete);
 	// Initializers
 	BOOL initializeGUIElements(GUIElements* gui);
