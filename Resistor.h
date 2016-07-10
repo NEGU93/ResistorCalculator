@@ -11,7 +11,7 @@ class Resistor {
 public:
 	Resistor(bool Vertical, int x, int y);
 	//TODO: ~Resistor();
-	void updateResistor(ALLEGRO_BITMAP* resistorImage, vector<Resistor> &resistorArray);
+	void updateResistor(ALLEGRO_BITMAP* resistorImage, vector<Resistor> &resistorArray, ALLEGRO_FONT *font);
 	UpperLowerEnum mouseOverRes(ALLEGRO_BITMAP* resistorImage, pos mouse);
 	void deleteResistor();
 	//Seters
@@ -27,6 +27,10 @@ public:
 	void deleteSon() { setSon(-1); }
 	void deleteBrother() { setBrother(-1); }
 	void deleteStepBro() { setStepBro(-1); }
+	void decreseFather() { ptr2father = ptr2father - 1; }
+	void decreseSon() { ptr2son = ptr2son - 1; }
+	void decreseBrother() { ptr2brother = ptr2brother - 1; }
+	void decreseStepBro() { ptr2stepBro = ptr2stepBro - 1; }
 	//Getters
 	double getValue() { return value; }
 	pos getCoords() { return rPos; }

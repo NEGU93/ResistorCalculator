@@ -16,6 +16,7 @@ public:
 	//Setters
 	void setIndex(int i) { index = i; }
 	void setCoords(int x, int y);
+	void decreseIndex() { index = index - 1; }
 	//Getters
 	pos getCorrds() { return nodeCoords; }
 	int getIndex() { return index; }

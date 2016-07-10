@@ -46,20 +46,23 @@ public:
 	ProgramCore(GUIElements* gui);
 	BOOL eventHandler(ALL* allegro, ProgramElements* elements, GUIElements* gui);
 private:
-	//Resistor Manipulation
+	// Resistor Manipulation
 	void wired(pos mouse, GUIElements* gui, ProgramElements* elements);
 	void deleteResistor(int indexToDelete);
-	//Initializers
+	bool startCalculation();
+	double calculate(int index);
+	void reorder(int indexToDelete);
+	// Initializers
 	BOOL initializeGUIElements(GUIElements* gui);
 	BOOL initializeMenu(GUIElements* gui);
-	//Update Functions
+	// Update Functions
 	void updateButton(Button button, pos mouse);
 	void updateScreen(ALL* allegro, GUIElements* gui, pos mouse, enum ModeEnum modeEnum);
 	void updateModes(GUIElements* gui, pos mouse, enum ModeEnum modeEnum);
 	void updateAllButtons(GUIElements* gui, pos mouse);
-	void updateResistors(GUIElements* gui);
+	void updateResistors(GUIElements* gui, ALLEGRO_FONT *font);
 	bool updateCalculButton();
-	//Mouse Buttons
+	// Mouse Buttons
 	BOOL checkButton(Button button, pos mouse);
 	BOOL click(ALL* allegro, pos mouse, GUIElements* gui, ProgramElements* elements);
 	void rightClick(ProgramElements* elements, GUIElements* gui);

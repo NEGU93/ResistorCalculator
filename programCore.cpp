@@ -148,10 +148,10 @@ void ProgramCore::updateScreen(ALL* allegro, GUIElements* gui, pos mouse, enum M
 	al_set_target_backbuffer(allegro->display);
 	al_clear_to_color(al_map_rgb(WHITE));
 	//al_draw_bitmap(allegro->fondo, 0, 0, 0);
-	updateResistors(gui);
+	updateResistors(gui, allegro->font);
 	updateAllButtons(gui, mouse);
 	updateModes(gui, mouse, modeEnum);
-	
+	al_draw_text(allegro->font, al_map_rgb(BLACK), 20, allegro->screenHeight - 20, ALLEGRO_ALIGN_LEFT, "Resistor Calculator Beta Version 1.0");
 	al_flip_display();
 }
 void ProgramCore::updateAllButtons(GUIElements* gui, pos mouse) {
@@ -193,21 +193,21 @@ void ProgramCore::updateModes(GUIElements* gui, pos mouse, enum ModeEnum modeEnu
 	else if (modeEnum == WIREPLACE) {
 		if (selectedResIndex != -1) {
 			pos resTime = resistorArray[selectedResIndex].getCoords();
-			if (resStart == UPPERPART) { al_draw_line(mouse.x, mouse.y, resTime.x, resTime.y, al_map_rgb(BLACK), 1); }
+			if (resStart == UPPERPART) { al_draw_line(mouse.x, mouse.y, resTime.x, resTime.y, al_map_rgb(BLACK), LINEWIDTH); }
 			else if (resStart == LOWERPART) {
-				if (resistorArray[selectedResIndex].getHoriz()) { al_draw_line(mouse.x, mouse.y, resTime.x + al_get_bitmap_width(gui->resistorImage), resTime.y, al_map_rgb(BLACK), 1); }
-				else { al_draw_line(mouse.x, mouse.y, resTime.x, resTime.y + al_get_bitmap_width(gui->resistorImage), al_map_rgb(BLACK), 1); }
+				if (resistorArray[selectedResIndex].getHoriz()) { al_draw_line(mouse.x, mouse.y, resTime.x + al_get_bitmap_width(gui->resistorImage), resTime.y, al_map_rgb(BLACK), LINEWIDTH); }
+				else { al_draw_line(mouse.x, mouse.y, resTime.x, resTime.y + al_get_bitmap_width(gui->resistorImage), al_map_rgb(BLACK), LINEWIDTH); }
 			}
 		}
 		else if (resStart == NODE) {
-			al_draw_line(vcc.getCorrds().x + al_get_bitmap_width(gui->vccImage) / 2, vcc.getCorrds().y + al_get_bitmap_height(gui->vccImage), mouse.x, mouse.y, al_map_rgb(BLACK), 1);
+			al_draw_line(vcc.getCorrds().x + al_get_bitmap_width(gui->vccImage) / 2, vcc.getCorrds().y + al_get_bitmap_height(gui->vccImage), mouse.x, mouse.y, al_map_rgb(BLACK), LINEWIDTH);
 		}
 	}
 }
-void ProgramCore::updateResistors(GUIElements* gui) {
+void ProgramCore::updateResistors(GUIElements* gui, ALLEGRO_FONT *font) {
 	if (!resistorArray.empty()) {
 		for (int i = 0; i < resistorArray.size(); i++) {
-			resistorArray[i].updateResistor(gui->resistorImage, resistorArray);
+			resistorArray[i].updateResistor(gui->resistorImage, resistorArray, font);
 		}
 	}
 	//UpdateNodes
@@ -215,15 +215,15 @@ void ProgramCore::updateResistors(GUIElements* gui) {
 	gnd.updateNode();
 	if (vcc.getIndex() != -1) {
 		pos firstRes = resistorArray[vcc.getIndex()].getCoords();
-		al_draw_line(vcc.getCorrds().x + al_get_bitmap_width(gui->vccImage) / 2, vcc.getCorrds().y + al_get_bitmap_height(gui->vccImage), firstRes.x, firstRes.y, al_map_rgb(BLACK), 1);
+		al_draw_line(vcc.getCorrds().x + al_get_bitmap_width(gui->vccImage) / 2, vcc.getCorrds().y + al_get_bitmap_height(gui->vccImage), firstRes.x, firstRes.y, al_map_rgb(BLACK), LINEWIDTH);
 	}
 	if (gnd.getIndex() != -1) {
 		pos lastRes = resistorArray[gnd.getIndex()].getCoords();
 		if (resistorArray[gnd.getIndex()].getHoriz()) {
-			al_draw_line(gnd.getCorrds().x + al_get_bitmap_width(gui->gndImage) / 2, gnd.getCorrds().y, lastRes.x + al_get_bitmap_width(gui->resistorImage), lastRes.y, al_map_rgb(BLACK), 1);
+			al_draw_line(gnd.getCorrds().x + al_get_bitmap_width(gui->gndImage) / 2, gnd.getCorrds().y, lastRes.x + al_get_bitmap_width(gui->resistorImage), lastRes.y, al_map_rgb(BLACK), LINEWIDTH);
 		}
 		else {
-			al_draw_line(gnd.getCorrds().x + al_get_bitmap_width(gui->gndImage) / 2, gnd.getCorrds().y, lastRes.x, lastRes.y + al_get_bitmap_width(gui->resistorImage), al_map_rgb(BLACK), 1);
+			al_draw_line(gnd.getCorrds().x + al_get_bitmap_width(gui->gndImage) / 2, gnd.getCorrds().y, lastRes.x, lastRes.y + al_get_bitmap_width(gui->resistorImage), al_map_rgb(BLACK), LINEWIDTH);
 		}
 	}
 }
@@ -245,6 +245,7 @@ BOOL ProgramCore::click(ALL* allegro, pos mouse, GUIElements* gui, ProgramElemen
 		else if (checkButton(gui->wireButton, mouse)) { elements->modeEnum = WIREPLACE; }
 		else if (checkButton(gui->gndButton, mouse)) { elements->modeEnum = GNDPLACE; }
 		else if (checkButton(gui->vccButton, mouse)) { elements->modeEnum = VCCPLACE; }
+		if (updateCalculButton() && checkButton(gui->runCalcul, mouse)) { startCalculation(); }
 	}
 	else if (elements->modeEnum == RESISTORPLACE) {
 		Resistor res = Resistor(false, mouse.x, mouse.y);
@@ -404,10 +405,48 @@ void ProgramCore::deleteResistor(int indexToDelete) {
 			cout << "Error, unrecognized child or brother" << endl; //It should never get here
 		}
 	}
+	if (resistorToDelete.getSon() != -1) { //Take care of your son
+		resistorArray[resistorToDelete.getSon()].deleteFather();
+	}
+	if (resistorToDelete.getBrother() != -1) { //Take care of your brother
+		resistorArray[resistorToDelete.getBrother()].deleteFather();
+	}
 	for (int i = 0; i < resistorArray.size(); i++) {
 		if (resistorArray[i].getStepBro() == indexToDelete) { resistorArray[i].deleteStepBro(); }
 	}
 	//resistorArray[indexToDelete].deleteResistor();
-	//TODO: acomodar los punteros XD
+	reorder(indexToDelete);
 	resistorArray.erase(resistorArray.begin() + indexToDelete);
+}
+void ProgramCore::reorder(int indexToDelete) {
+	if (gnd.getIndex() > indexToDelete) { gnd.decreseIndex(); }
+	else if (gnd.getIndex() == indexToDelete) { gnd.setIndex(-1); }
+	if (vcc.getIndex() > indexToDelete) { vcc.decreseIndex(); }
+	else if (vcc.getIndex() == indexToDelete) { vcc.setIndex(-1); }
+	for (int i = 0; i < resistorArray.size(); i++) {
+		if (resistorArray[i].getBrother() > indexToDelete) { resistorArray[i].decreseBrother(); }
+		if (resistorArray[i].getFather() > indexToDelete) { resistorArray[i].decreseFather(); }
+		if (resistorArray[i].getSon() > indexToDelete) { resistorArray[i].decreseSon(); }
+		if (resistorArray[i].getStepBro() > indexToDelete) { resistorArray[i].decreseStepBro(); }
+	}
+}
+bool ProgramCore::startCalculation() {
+	double ans = calculate(vcc.getIndex()); //If I got here I already checked vcc points the correct one and that I have a limit.
+	return true;
+}
+double ProgramCore::calculate(int index) {
+	if (resistorArray[index].getBrother() != -1) { //Have Brother
+		if (resistorArray[index].getBrother() == resistorArray[index].getStepBro()) {
+			double broCalculate = calculate(resistorArray[index].getBrother());
+			resistorArray[index].setValue( (resistorArray[index].getValue() * broCalculate) / ( resistorArray[index].getValue() + broCalculate) );
+			//if(resistorArray[index].getBrother())
+			deleteResistor(resistorArray[index].getBrother());
+		}
+	}
+	if (resistorArray[index].getSon() != -1) { //Have Son but no brother
+		return resistorArray[index].getValue() + calculate(resistorArray[index].getSon());
+	}
+	else {
+		return resistorArray[index].getValue();
+	}
 }

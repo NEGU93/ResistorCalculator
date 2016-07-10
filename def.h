@@ -10,6 +10,10 @@ using namespace std;
 #define WHITE 255,255,255
 #define BLACK 0,0,0
 
+#define PI 3.14159265358979323846
+#define DELTA 33
+#define LINEWIDTH 2
+
 #define TRUE 1
 #define FALSE 0
 
