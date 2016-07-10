@@ -21,6 +21,7 @@ int init_allegro(ALL *allegro) {
 				if (al_install_mouse()) {
 					if (al_install_keyboard()) {
 						if (allegro->display = al_create_display(SCREEN_X, SCREEN_Y)) {
+							al_set_window_title(allegro->display, "Resistor Calulator by NEGU");
 							//CODE TO FULLSCREEN, CHANGE IN CASE OF MULFUNCTION
 							/*TODO: lo comento porque es dificil para debuguear... luego agregarlo. tira mas facha*/
 							/*ALLEGRO_DISPLAY_MODE   disp_data;
@@ -33,10 +34,10 @@ int init_allegro(ALL *allegro) {
 							allegro->screenWidth = SCREEN_X;
 							allegro->screenHeight = SCREEN_Y;
 
-							//if (allegro->fondo = al_load_bitmap_resized("Resources/BackImage.jpg", allegro)) {
+							if (allegro->downBar = al_load_bitmap("Resources/DownBar.png")) {
 								state = TRUE;
-							//}
-							//else { printf("Couldn't load BackImage.jpg"); }
+							}
+							else { printf("Couldn't load BackImage.jpg"); }
 						}
 						else { printf("Failed to create display"); }
 					}

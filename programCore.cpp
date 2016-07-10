@@ -149,10 +149,12 @@ void ProgramCore::updateScreen(ALL* allegro, GUIElements* gui, pos mouse, enum M
 	int i = 0;
 	al_set_target_backbuffer(allegro->display);
 	al_clear_to_color(al_map_rgb(WHITE));
+	al_draw_bitmap(allegro->downBar, 0, SCREEN_Y - al_get_bitmap_height(allegro->downBar), 0);
 	//al_draw_bitmap(allegro->fondo, 0, 0, 0);
 	updateResistors(gui, allegro->font);
 	updateAllButtons(gui, mouse);
 	updateModes(gui, mouse, modeEnum);
+	al_draw_textf(allegro->font, al_map_rgb(BLACK), SCREEN_X - 20, allegro->screenHeight - 20, ALLEGRO_ALIGN_RIGHT, "X:%d; Y:%d", mouse.x, mouse.y);
 	updateTextMode(allegro->font, 20, allegro->screenHeight - 20, modeEnum);
 	al_flip_display();
 }
