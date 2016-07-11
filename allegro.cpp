@@ -9,7 +9,7 @@
 #define READY 1
 #define EXIT -1
 
-#define DIAGONALLY 0 //1 = lines in diagonall, 0 = Rectas
+#define DIAGONALLY 1 //1 = lines in diagonall, 0 = Rectas
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 //				INICIALIZO ALLEGRO Y TODOS LOS COMPLEMENTOS QUE SE USAN						//
@@ -146,13 +146,18 @@ ALLEGRO_BITMAP *al_load_bitmap_resized(const char *filename, ALL* allegro) {
 }
 
 void draw_line(int x1, int y1, int x2, int y2, ALLEGRO_COLOR color, float thickness) {
-	if (y1 < y2) {
-		al_draw_line(x1, y1, x2, y1, color, thickness);
-		al_draw_line(x2, y1, x2, y2, color, thickness);
+	if (DIAGONALLY) {
+		al_draw_line(x1, y1, x2, y2, color, thickness);
 	}
 	else {
-		al_draw_line(x1, y1, x1, y2, color, thickness);
-		al_draw_line(x1, y2, x2, y2, color, thickness);
+		if (y1 < y2) {
+			al_draw_line(x1, y1, x2, y1, color, thickness);
+			al_draw_line(x2, y1, x2, y2, color, thickness);
+		}
+		else {
+			al_draw_line(x1, y1, x1, y2, color, thickness);
+			al_draw_line(x1, y2, x2, y2, color, thickness);
+		}
 	}
 }
 void draw_line_inverted(int x1, int y1, int x2, int y2, ALLEGRO_COLOR color, float thickness) {

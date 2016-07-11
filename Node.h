@@ -11,7 +11,6 @@
 class Node {
 public:
 	Node();
-	//~Node() { al_destroy_bitmap(this->image); }
 	Node(ALLEGRO_BITMAP* image, bool type);
 	void updateNode(vector<Resistor> &resistorArray, ALLEGRO_BITMAP* resistorImage);
 	bool mouseOverNode(pos mouse);
