@@ -14,9 +14,9 @@ enum ModeEnum { NORMAL, MOVEMODE, RIGHTCLICK,
 
 typedef struct {
 	pos mouse;
-	int redraw;
+	int redraw;					// It tells the event handler if it is time to redraw the screen or not.
 	int stillRunning;
-	enum ModeEnum modeEnum;
+	enum ModeEnum modeEnum;	
 } ProgramElements;
 
 typedef struct {
@@ -41,9 +41,13 @@ typedef struct {
 	Button menuButtons[MENUSIZE];
 } GUIElements;
 
+void destroyButton(Button* button);
+void destroyGuiElements(GUIElements* guiElements);
+
 class ProgramCore {
 public:
 	ProgramCore(GUIElements* gui);
+	~ProgramCore();
 	BOOL eventHandler(ALL* allegro, ProgramElements* elements, GUIElements* gui);
 private:
 	// Initializers
@@ -57,6 +61,7 @@ private:
 	void updateResistors(GUIElements* gui, ALLEGRO_FONT *font);
 	void updateTextMode(ALLEGRO_FONT *font, int x, int y, enum ModeEnum modeEnum);
 	bool updateCalculButton();
+	void makeGrid();
 	// Mouse Buttons
 	BOOL checkButton(Button button, pos mouse);
 	BOOL click(ALL* allegro, pos mouse, GUIElements* gui, ProgramElements* elements);
@@ -79,6 +84,7 @@ private:
 	Node gnd;
 	int selectedResIndex;
 	bool grid;
+	bool stepMode;
 	pos backupPos;
 	UpperLowerEnum resStart;
 };

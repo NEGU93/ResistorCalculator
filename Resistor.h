@@ -3,20 +3,15 @@
 
 #include "def.h"
 #include "allegro.h"
-//#include "programCore.h"
-
-
 
 class Resistor {
 public:
-	Resistor(bool Vertical, int x, int y);
-	//TODO: ~Resistor();
+	Resistor(bool Vertical, int x, int y, bool stepMode);
 	void updateResistor(ALLEGRO_BITMAP* resistorImage, vector<Resistor> &resistorArray, ALLEGRO_FONT *font);
 	UpperLowerEnum mouseOverRes(ALLEGRO_BITMAP* resistorImage, pos mouse);
-	void deleteResistor();
 	//Seters
 	void setValue(double value) { this->value = value; }
-	void moveResistor(int x, int y);
+	void moveResistor(int x, int y, bool stepMode);
 	void rotate() { horizontal = !horizontal; }
 		//Pointers
 	void setFather(int index) { ptr2father = index; }
@@ -40,6 +35,7 @@ public:
 	int getBrother() { return ptr2brother; }
 	int getSon() { return ptr2son; }
 	int getStepBro() { return ptr2stepBro; }
+	int roundUp(int numToRound);
 private:
 	double value;
 	pos rPos;

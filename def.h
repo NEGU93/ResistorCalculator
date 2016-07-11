@@ -9,12 +9,14 @@ using namespace std;
 
 #define WHITE 255,255,255
 #define BLACK 0,0,0
+#define GRAY 100,100,100
 #define DARKBLUE 0,0,100
 #define LINECOLOUR DARKBLUE
 
 #define PI 3.14159265358979323846
 #define DELTA 5
 #define LINEWIDTH 2
+#define MULTIPLE 32
 
 #define TRUE 1
 #define FALSE 0

@@ -1,11 +1,17 @@
 #include "Resistor.h"
 
 
-Resistor::Resistor(bool vertical, int x, int y) {
+Resistor::Resistor(bool vertical, int x, int y, bool stepMode) {
 	value = 1000;
 	this->horizontal = vertical;
-	rPos.x = x;
-	rPos.y = y;
+	if (stepMode) {
+		rPos.x = roundUp(x);
+		rPos.y = roundUp(y);
+	}
+	else {
+		rPos.x = x;
+		rPos.y = y;
+	}
 	ptr2brother = -1;
 	ptr2father = -1;
 	ptr2son = -1;
@@ -56,9 +62,15 @@ void Resistor::updateResistor(ALLEGRO_BITMAP* resistorImage, vector<Resistor> &r
 		else { cout << "StepBro out of bounds" << endl; }
 	}
 }
-void Resistor::moveResistor(int x, int y) {
-	rPos.x = x;
-	rPos.y = y;
+void Resistor::moveResistor(int x, int y, bool stepMode) {
+	if (stepMode) {
+		rPos.x = roundUp(x);
+		rPos.y = roundUp(y);
+	}
+	else {
+		rPos.x = x;
+		rPos.y = y;
+	}
 }
 UpperLowerEnum Resistor::mouseOverRes(ALLEGRO_BITMAP* resistorImage, pos mouse) {
 	UpperLowerEnum ans = NOTOVER;
@@ -83,5 +95,15 @@ UpperLowerEnum Resistor::mouseOverRes(ALLEGRO_BITMAP* resistorImage, pos mouse) 
 		}
 	}
 	return ans;
+}
+int Resistor::roundUp(int numToRound) {
+	if (MULTIPLE == 0) {
+		return numToRound;
+	}
+
+	int roundDown = ((int)(numToRound) / MULTIPLE) * MULTIPLE;
+	int roundUp = roundDown + MULTIPLE;
+	int roundCalc = roundUp;
+	return (roundCalc);
 }
 

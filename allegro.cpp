@@ -97,7 +97,8 @@ void destroyAll(ALL *allegro) {
 	//Fonts
 	al_destroy_font(allegro->font);
 	//Bitmaps
-	//al_destroy_bitmap(allegro->fondo);
+	al_destroy_bitmap(allegro->fondo);
+	al_destroy_bitmap(allegro->downBar);
 	//Addons
 	al_uninstall_keyboard();
 	al_uninstall_mouse();

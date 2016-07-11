@@ -15,6 +15,29 @@ ProgramCore::ProgramCore(GUIElements* gui) {
 	backupPos.x = 0;
 	backupPos.y = 0;
 	grid = true;
+	stepMode = true;
+}
+ProgramCore::~ProgramCore() {
+	resistorArray.clear();
+}
+
+//Destroyers
+void destroyButton(Button* button) {
+	al_destroy_bitmap(button->buttonImage);
+	al_destroy_bitmap(button->mouseOverButtonImage);
+}
+void destroyGuiElments(GUIElements* guiElements) {
+	// Destroy Buttons
+	destroyButton(&(guiElements->resistorButton));
+	destroyButton(&(guiElements->wireButton));
+	destroyButton(&(guiElements->gndButton));
+	destroyButton(&(guiElements->vccButton));
+	destroyButton(&(guiElements->runCalcul));
+	for (int i = 0; i < MENUSIZE; i++) { destroyButton(&(guiElements->menuButtons[i])); }
+	// Destroy Images
+	al_destroy_bitmap(guiElements->resistorImage);
+	al_destroy_bitmap(guiElements->gndImage);
+	al_destroy_bitmap(guiElements->vccImage);
 }
 
 BOOL ProgramCore::eventHandler(ALL* allegro, ProgramElements* elements, GUIElements* gui) {
@@ -30,7 +53,7 @@ BOOL ProgramCore::eventHandler(ALL* allegro, ProgramElements* elements, GUIEleme
 		elements->mouse.x = ev.mouse.x;
 		elements->mouse.y = ev.mouse.y;
 		if (elements->modeEnum == MOVEMODE) {
-			resistorArray[selectedResIndex].moveResistor(elements->mouse.x, elements->mouse.y);
+			resistorArray[selectedResIndex].moveResistor(elements->mouse.x, elements->mouse.y, stepMode);
 		}
 	}
 	else if (ev.type == ALLEGRO_EVENT_MOUSE_BUTTON_UP) { 
@@ -44,6 +67,18 @@ BOOL ProgramCore::eventHandler(ALL* allegro, ProgramElements* elements, GUIEleme
 		case ALLEGRO_KEY_SPACE:
 			if (gui->resistorAngle == 0) { gui->resistorAngle = PI / 2; }
 			else { gui->resistorAngle = 0; }
+			break;
+		case ALLEGRO_KEY_TAB:
+			stepMode = !stepMode;
+			break;
+		case ALLEGRO_KEY_G:
+			grid = !grid;
+			break;
+		case ALLEGRO_KEY_ESCAPE:
+			selectedResIndex = -1;
+			resStart = NOTOVER;
+			elements->modeEnum = NORMAL;
+			break;
 		}
 	}
 	//if redraw then update screen
@@ -149,7 +184,7 @@ void ProgramCore::updateScreen(ALL* allegro, GUIElements* gui, pos mouse, enum M
 	int i = 0;
 	al_set_target_backbuffer(allegro->display);
 	al_clear_to_color(al_map_rgb(WHITE));
-	if (grid) { al_draw_bitmap(allegro->fondo, 0, 0, 0); }
+	if (grid) { makeGrid(); }
 	al_draw_bitmap(allegro->downBar, 0, SCREEN_Y - al_get_bitmap_height(allegro->downBar), 0);
 	//al_draw_bitmap(allegro->fondo, 0, 0, 0);
 	updateResistors(gui, allegro->font);
@@ -248,13 +283,32 @@ void ProgramCore::updateTextMode(ALLEGRO_FONT *font, int x, int y, enum ModeEnum
 }
 bool ProgramCore::updateCalculButton() {
 	int index = gnd.getIndex();
+	bool ready = false;
 	if (index != -1) {
 		while (resistorArray[index].getFather() != -1) {
 			index = resistorArray[index].getFather();
 		}
-		if (vcc.getIndex() == index) { return true; }
+		if (vcc.getIndex() == index) { ready = true; }
 	}
-	return false;
+	if (ready) {
+		for (int i = 0; i < resistorArray.size(); i++) {
+			if (resistorArray[i].getSon() == -1 && i != gnd.getIndex()) {
+				if (resistorArray[i].getStepBro() == -1 || resistorArray[i].getFather() == -1) {
+					ready = false;
+					return ready; //No need to keep looking, I know the result.
+				}
+			}
+		}
+	}
+	return ready;
+}
+void ProgramCore::makeGrid() {
+	for (int i = 1; i < SCREEN_X / MULTIPLE; i++) {
+		al_draw_line(i * MULTIPLE, 0, i * MULTIPLE, SCREEN_Y, al_map_rgb(GRAY), 1);
+	}
+	for (int j = 1; j < SCREEN_Y / MULTIPLE; j++) {
+		al_draw_line(0, j * MULTIPLE, SCREEN_X, j * MULTIPLE, al_map_rgb(GRAY), 1);
+	}
 }
 // Mouse Functions
 BOOL ProgramCore::checkButton(Button button, pos mouse) {
@@ -277,7 +331,7 @@ BOOL ProgramCore::click(ALL* allegro, pos mouse, GUIElements* gui, ProgramElemen
 		if (updateCalculButton() && checkButton(gui->runCalcul, mouse)) { startCalculation(allegro, gui, mouse, elements->modeEnum); }
 	}
 	else if (elements->modeEnum == RESISTORPLACE) {
-		Resistor res = Resistor(false, mouse.x, mouse.y);
+		Resistor res = Resistor(false, mouse.x, mouse.y, stepMode);
 		if (gui->resistorAngle == 0) { res.rotate(); }
 		resistorArray.push_back(res);
 		//elements->modeEnum = NORMAL;
@@ -322,7 +376,7 @@ BOOL ProgramCore::click(ALL* allegro, pos mouse, GUIElements* gui, ProgramElemen
 		//elements->modeEnum = NORMAL;
 	}
 	else if (elements->modeEnum == MOVEMODE) {
-		resistorArray[selectedResIndex].moveResistor(mouse.x, mouse.y);
+		resistorArray[selectedResIndex].moveResistor(mouse.x, mouse.y, stepMode);
 		elements->modeEnum = NORMAL;
 		selectedResIndex = -1;
 	}
@@ -348,7 +402,7 @@ void ProgramCore::rightClick(ProgramElements* elements, GUIElements* gui) {
 		elements->modeEnum = NORMAL;
 	}
 	else if (elements->modeEnum == MOVEMODE) {
-		resistorArray[selectedResIndex].moveResistor(backupPos.x, backupPos.y);
+		resistorArray[selectedResIndex].moveResistor(backupPos.x, backupPos.y, stepMode);
 		backupPos.x = 0;
 		backupPos.y = 0;
 		selectedResIndex = -1;
