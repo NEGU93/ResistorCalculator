@@ -21,7 +21,7 @@ using namespace std;
 #define TRUE 1
 #define FALSE 0
 
-enum UpperLowerEnum { NOTOVER, UPPERPART, LOWERPART, NODE };
+enum UpperLowerEnum { NOTOVER, UPPERPART, LOWERPART, NODEVCC, NODEGND };
 
 typedef struct {
 	int x;

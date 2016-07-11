@@ -73,6 +73,9 @@ private:
 	void getParallel(int index, ALL* allegro, GUIElements* gui, pos mouse, enum ModeEnum modeEnum);
 	// Resistor Manipulation
 	void wired(pos mouse, GUIElements* gui, ProgramElements* elements);
+	void nodeWire(pos mouse, ModeEnum &modeEnum);
+	void resistorWire(pos mouse, GUIElements* gui);
+	void ProgramCore::setFatherSon(vector<Resistor> &resistorArray, int father, int son);
 	//Deletion Process
 	void deleteResistor(int indexToDelete);
 	void reorder(int indexToDelete);

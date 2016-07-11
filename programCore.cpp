@@ -242,8 +242,11 @@ void ProgramCore::updateModes(GUIElements* gui, pos mouse, enum ModeEnum modeEnu
 				else { draw_line(mouse.x, mouse.y, resTime.x, resTime.y + al_get_bitmap_width(gui->resistorImage), al_map_rgb(LINECOLOUR), LINEWIDTH); }
 			}
 		}
-		else if (resStart == NODE) {
+		else if (resStart == NODEVCC) {
 			draw_line(vcc.getCorrds().x + al_get_bitmap_width(gui->vccImage) / 2, vcc.getCorrds().y + al_get_bitmap_height(gui->vccImage), mouse.x, mouse.y, al_map_rgb(LINECOLOUR), LINEWIDTH);
+		}
+		else if (resStart == NODEGND) {
+			draw_line(gnd.getCorrds().x + al_get_bitmap_width(gui->gndImage) / 2, gnd.getCorrds().y, mouse.x, mouse.y, al_map_rgb(LINECOLOUR), LINEWIDTH);
 		}
 	}
 }
@@ -351,6 +354,7 @@ BOOL ProgramCore::click(ALL* allegro, pos mouse, GUIElements* gui, ProgramElemen
 		elements->modeEnum = NORMAL;
 	}
 	else if (elements->modeEnum == RIGHTCLICK) {
+		elements->modeEnum = NORMAL;
 		int i = 0;
 		for (i = 0; i < MENUSIZE; i++) {
 			if (checkButton(gui->menuButtons[i], mouse)) {
@@ -358,7 +362,6 @@ BOOL ProgramCore::click(ALL* allegro, pos mouse, GUIElements* gui, ProgramElemen
 				case 0:	//Delete
 					deleteResistor(selectedResIndex);
 					selectedResIndex = -1;
-					elements->modeEnum = NORMAL;
 					break;
 				case 1:	//Move
 					elements->modeEnum = MOVEMODE;
@@ -367,10 +370,8 @@ BOOL ProgramCore::click(ALL* allegro, pos mouse, GUIElements* gui, ProgramElemen
 				case 2: //Rotate
 					resistorArray[selectedResIndex].rotate();
 					selectedResIndex = -1;
-					elements->modeEnum = NORMAL;
 					break;
 				case 3:	//Set Value
-					elements->modeEnum = NORMAL;
 					updateScreen(allegro, gui, mouse, elements->modeEnum);
 					resistorArray[selectedResIndex].setValue(setValue(allegro->font));
 					break;
@@ -421,57 +422,107 @@ void ProgramCore::rightClick(ProgramElements* elements, GUIElements* gui) {
 
 void ProgramCore::wired(pos mouse, GUIElements* gui, ProgramElements* elements) {
 	// This function is used wile conecting resistors with each other.
+	resistorWire(mouse, gui);
+	nodeWire(mouse, elements->modeEnum);
+}
+void ProgramCore::nodeWire(pos mouse, ModeEnum &modeEnum) {
+	if (vcc.wireNode(mouse, selectedResIndex, resStart)) { modeEnum = NORMAL; }
+	if (gnd.wireNode(mouse, selectedResIndex, resStart)) { modeEnum = NORMAL; }
+}
+void ProgramCore::resistorWire(pos mouse, GUIElements* gui) {
 	for (int i = 0; i < resistorArray.size(); i++) {
-		UpperLowerEnum upperLowerEnum = resistorArray[i].mouseOverRes(gui->resistorImage, mouse);
-		if (upperLowerEnum != NOTOVER) {
-			if (resStart == NOTOVER) {
+		UpperLowerEnum upperLowerEnum = resistorArray[i].mouseOverRes(gui->resistorImage, mouse); // Save the place of the resistor
+		if (upperLowerEnum != NOTOVER) {	//If it was over something lets start... (this can't be NODEVCC or NODEGND)
+			if (resStart == NOTOVER) { //If it's the firs of the 2 resistors save it.
 				resStart = upperLowerEnum;
 				selectedResIndex = i;
 			}
 			else {
-				if ((resStart != LOWERPART) || (upperLowerEnum != LOWERPART)) { //Unless closing brotherhood
-					if (resistorArray[i].getFather() != -1) { //It it has another son, leave it.
-						int last = resistorArray[i].getFather();
-						if (resistorArray[last].getSon() == i) { resistorArray[last].deleteSon(); }
-						else if (resistorArray[last].getBrother() == i) { resistorArray[last].deleteBrother(); }
-					}
-					else { if (vcc.getIndex() == i) { vcc.setIndex(-1); } }
-					resistorArray[i].setFather(selectedResIndex); //If it's NODE it will be the same as delete father.
+				/* *****************************************************************************************
+				*	Options:
+				*		ResStart:
+				*			1. NODEVCC: Do nothing to the new one, just set the new index to vcc
+				*			2. NODEGND: Idem vcc but with gnd.
+				*			3. LOWERPART:
+				*				3.1: UPPERPART:	Set father / Son
+				*				3.2: LOWERPART: Set Step Bros
+				*			4. UPPERPART:
+				*				4.1: UPPERPART:	SET BROTHERS
+				*					a.
+				*					b.
+				*				4.2: LOWERPART: Set father / Son backward
+				****************************************************************************************** */  
+				if (resStart == NODEVCC) { vcc.setIndex(i); }
+				else if (resStart == NODEGND) { gnd.setIndex(i); }
+				else if (resStart == LOWERPART) {
+					if (upperLowerEnum == UPPERPART) { setFatherSon(resistorArray, selectedResIndex, i); }
+					else if (upperLowerEnum == LOWERPART) { setStepBros(resistorArray, selectedResIndex, i); }
+					else { cout << "Should never reach here" << endl; }
 				}
-				if (resStart == LOWERPART) { 
-					if (upperLowerEnum == LOWERPART) {
-						resistorArray[selectedResIndex].setStepBro(i);
-						resistorArray[i].setStepBro(selectedResIndex);
-					}
-					else if (upperLowerEnum == UPPERPART) {
-						resistorArray[selectedResIndex].setSon(i);
-					}
+				else if (resStart == UPPERPART) {
+					if (upperLowerEnum == LOWERPART) { setFatherSon(resistorArray, i, selectedResIndex); }
+					else if (upperLowerEnum == UPPERPART) { setBros(resistorArray, selectedResIndex, i); }
+					else { cout << "Should never reach here" << endl; }
 				}
-				else if (resStart == UPPERPART) { resistorArray[selectedResIndex].setBrother(i); }
-				else if (resStart == NODE) { vcc.setIndex(i); }
 				else { cout << "Error, resStart wasn't Lower nor Upper" << endl; } //Normally it should never get here.
+				
+				//End of wiring
 				resStart = NOTOVER;
 				selectedResIndex = -1;
 				//elements->modeEnum = NORMAL;
 			}
 		}
 	}
-	if (vcc.mouseOverNode(mouse)) {
-		if (resStart == NOTOVER) { resStart = NODE; }
-		else { 
-			elements->modeEnum = NORMAL;
-			selectedResIndex = -1;
-			resStart = NOTOVER;
-		}
+}
+void ProgramCore::setFatherSon(vector<Resistor> &resistorArray, int father, int son) {
+	if (resistorArray[son].getFather() != -1) { //It it has a father already, leave it.
+		int last = resistorArray[son].getFather();
+		if (resistorArray[last].getSon() == son) { resistorArray[last].deleteSon(); }
+		else if (resistorArray[last].getBrother() == son) { resistorArray[last].deleteBrother(); }
 	}
-	if (gnd.mouseOverNode(mouse)) {
-		if (resStart != NOTOVER) { 
-			gnd.setIndex(selectedResIndex);
-			//elements->modeEnum = NORMAL;
-			resStart = NOTOVER;
-			selectedResIndex = -1;
+	if (resistorArray[father].getSon() != -1) {	resistorArray[resistorArray[father].getSon()].setFather(-1); } //If the father had a son leave it.
+	// Now the real stuf.
+	resistorArray[father].setSon(son);
+	resistorArray[son].setFather(father);
+}
+void ProgramCore::setStepBros(vector<Resistor> &resistorArray, int bro1, int bro2) {
+	//Go where no step brother is defined
+	while (resistorArray[bro1].getStepBro() != -1) { bro1 = resistorArray[bro1].getStepBro(); }
+	while (resistorArray[bro2].getStepBro() != -1) { bro2 = resistorArray[bro2].getStepBro(); }
+	resistorArray[bro1].setStepBro(bro2);
+	resistorArray[bro2].setStepBro(bro1);
+}
+void setBros(vector<Resistor> &resistorArray, int bro1, int bro2) {
+	//If both brothers have a father then error
+	if (resistorArray[bro1].getFather() != -1 && resistorArray[bro2].getFather() != -1) {
+		cout << "Invalid wiring, at least one brother must have no father" << endl;
+		return;
+	}
+	//Gives prority to bro1 normally bro1 will be father.
+	if (resistorArray[bro1].getFather() != -1) { //If it has a father then this will have brother and the other the father
+		while (resistorArray[bro1].getBrother() != -1) { 
+			bro1 = resistorArray[bro1].getBrother(); 
+			if (resistorArray[bro1].getFather != -1) { cout << "Invalid wiring, at least one brother must have no father" << endl; return; }
+		}	//Makes sure it has no brother
+		resistorArray[bro1].setBrother(bro2);
+		resistorArray[bro2].setFather(bro1);
+	}
+	if (resistorArray[bro2].getFather() != -1) { //If it has a father then this will have brother and the other the father
+		while (resistorArray[bro2].getBrother() != -1) { 
+			bro2 = resistorArray[bro2].getBrother(); 
+			if (resistorArray[bro2].getFather != -1) { cout << "Invalid wiring, at least one brother must have no father" << endl; return; }
 		}
-		else { elements->modeEnum = NORMAL; }
+		resistorArray[bro2].setBrother(bro1);
+		resistorArray[bro1].setFather(bro2);
+	}
+	// If both have no father
+	while (resistorArray[bro1].getBrother() != -1) { 
+		bro1 = resistorArray[bro1].getBrother(); 
+		if (resistorArray[bro1].getFather != -1) { cout << "Invalid wiring, at least one brother must have no father" << endl; return; }
+	}	//Makes sure it has no brother
+	while (resistorArray[bro2].getBrother() != -1) { 
+		bro2 = resistorArray[bro2].getBrother(); 
+		if (resistorArray[bro2].getFather != -1) { cout << "Invalid wiring, at least one brother must have no father" << endl; return; }
 	}
 }
 

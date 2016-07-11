@@ -51,3 +51,22 @@ bool Node::mouseOverNode(pos mouse) {
 	}
 	return false;
 }
+bool Node::wireNode(pos mouse, int &selectedResIndex, UpperLowerEnum& resStart) {
+	if (mouseOverNode(mouse)) {
+		if (resStart == NOTOVER) { 
+			if (nodeType) { resStart = NODEVCC; }
+			else { resStart = NODEGND; }
+		}
+		else if (resStart != NOTOVER && selectedResIndex != -1) {	// The second is to make sure GND is not connected to VCC
+			setIndex(selectedResIndex);
+			resStart = NOTOVER;
+			selectedResIndex = -1;
+		}
+		else {
+			selectedResIndex = -1;
+			resStart = NOTOVER;
+			return true;
+		}
+	}
+	return false;
+}

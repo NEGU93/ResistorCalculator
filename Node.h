@@ -14,6 +14,7 @@ public:
 	Node(ALLEGRO_BITMAP* image, bool type);
 	void updateNode(vector<Resistor> &resistorArray, ALLEGRO_BITMAP* resistorImage);
 	bool mouseOverNode(pos mouse);
+	bool wireNode(pos mouse, int &selectedResIndex, UpperLowerEnum& resStart);
 	//Setters
 	void setIndex(int i) { index = i; }
 	void setCoords(int x, int y);
