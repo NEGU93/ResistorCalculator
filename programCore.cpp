@@ -487,8 +487,8 @@ void ProgramCore::setFatherSon(vector<Resistor> &resistorArray, int father, int 
 }
 void ProgramCore::setStepBros(vector<Resistor> &resistorArray, int bro1, int bro2) {
 	//Go where no step brother is defined
-	while (resistorArray[bro1].getStepBro() != -1) { bro1 = resistorArray[bro1].getStepBro(); }
-	while (resistorArray[bro2].getStepBro() != -1) { bro2 = resistorArray[bro2].getStepBro(); }
+	//while (resistorArray[bro1].getStepBro() != -1) { bro1 = resistorArray[bro1].getStepBro(); }
+	//while (resistorArray[bro2].getStepBro() != -1) { bro2 = resistorArray[bro2].getStepBro(); }
 	resistorArray[bro1].setStepBro(bro2);
 	resistorArray[bro2].setStepBro(bro1);
 }
@@ -527,7 +527,7 @@ void ProgramCore::setBros(vector<Resistor> &resistorArray, int bro1, int bro2) {
 }
 bool ProgramCore::checkForRealFather(vector<Resistor> &resistorArray, int index) {
 	//As father can be both father or brother, this returns true if the father was a father
-	if (resistorArray[index].getFather() == -1) { cout << "wrong index, the index had no father at all" << endl; return false; } //This is preventive coding, It should be outside
+	if (resistorArray[index].getFather() == -1) { return false; } //This is preventive coding, It should be outside
 	if (resistorArray[resistorArray[index].getFather()].getSon() == index) { return true; }
 	else { return false; }
 }
