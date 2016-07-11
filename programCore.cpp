@@ -1,5 +1,6 @@
 //#include <math.h>
 #include "programCore.h"
+#include "setValue.h"
 #include <stdlib.h>
 #define TIMEPAUSE 1000
 #define PI 3.14159265358979323846
@@ -369,6 +370,9 @@ BOOL ProgramCore::click(ALL* allegro, pos mouse, GUIElements* gui, ProgramElemen
 					elements->modeEnum = NORMAL;
 					break;
 				case 3:	//Set Value
+					elements->modeEnum = NORMAL;
+					updateScreen(allegro, gui, mouse, elements->modeEnum);
+					resistorArray[selectedResIndex].setValue(setValue(allegro->font));
 					break;
 				}
 			}
