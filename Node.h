@@ -3,6 +3,7 @@
 
 #include "def.h"
 #include "allegro.h"
+#include "Resistor.h"
 
 #define VCC 1
 #define GND 0
@@ -10,8 +11,8 @@
 class Node {
 public:
 	Node();
-	Node(ALLEGRO_BITMAP* image);
-	void updateNode();
+	Node(ALLEGRO_BITMAP* image, bool type);
+	void updateNode(vector<Resistor> &resistorArray, ALLEGRO_BITMAP* resistorImage);
 	bool mouseOverNode(pos mouse);
 	//Setters
 	void setIndex(int i) { index = i; }
@@ -24,6 +25,7 @@ private:
 	int index;
 	pos nodeCoords;
 	ALLEGRO_BITMAP* image;
+	bool nodeType; //true == VCC, false == GND
 };
 
 #endif

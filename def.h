@@ -13,7 +13,7 @@ using namespace std;
 #define LINECOLOUR DARKBLUE
 
 #define PI 3.14159265358979323846
-#define DELTA 33
+#define DELTA 5
 #define LINEWIDTH 2
 
 #define TRUE 1

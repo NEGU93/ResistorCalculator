@@ -78,6 +78,7 @@ private:
 	Node vcc;
 	Node gnd;
 	int selectedResIndex;
+	bool grid;
 	pos backupPos;
 	UpperLowerEnum resStart;
 };

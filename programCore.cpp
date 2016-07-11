@@ -10,10 +10,11 @@ ProgramCore::ProgramCore(GUIElements* gui) {
 	}
 	resStart = NOTOVER;
 	selectedResIndex = -1;
-	vcc = Node(gui->vccImage);
-	gnd = Node(gui->gndImage);
+	vcc = Node(gui->vccImage, true);
+	gnd = Node(gui->gndImage, false);
 	backupPos.x = 0;
 	backupPos.y = 0;
+	grid = true;
 }
 
 BOOL ProgramCore::eventHandler(ALL* allegro, ProgramElements* elements, GUIElements* gui) {
@@ -148,6 +149,7 @@ void ProgramCore::updateScreen(ALL* allegro, GUIElements* gui, pos mouse, enum M
 	int i = 0;
 	al_set_target_backbuffer(allegro->display);
 	al_clear_to_color(al_map_rgb(WHITE));
+	if (grid) { al_draw_bitmap(allegro->fondo, 0, 0, 0); }
 	al_draw_bitmap(allegro->downBar, 0, SCREEN_Y - al_get_bitmap_height(allegro->downBar), 0);
 	//al_draw_bitmap(allegro->fondo, 0, 0, 0);
 	updateResistors(gui, allegro->font);
@@ -194,6 +196,8 @@ void ProgramCore::updateModes(GUIElements* gui, pos mouse, enum ModeEnum modeEnu
 		}
 	}
 	else if (modeEnum == WIREPLACE) {
+		al_draw_line(mouse.x - DELTA, mouse.y, mouse.x + DELTA, mouse.y, al_map_rgb(BLACK), 1);
+		al_draw_line(mouse.x , mouse.y - DELTA, mouse.x, mouse.y + DELTA, al_map_rgb(BLACK), 1);
 		if (selectedResIndex != -1) {
 			pos resTime = resistorArray[selectedResIndex].getCoords();
 			if (resStart == UPPERPART) { draw_line(mouse.x, mouse.y, resTime.x, resTime.y, al_map_rgb(LINECOLOUR), LINEWIDTH); }
@@ -214,21 +218,8 @@ void ProgramCore::updateResistors(GUIElements* gui, ALLEGRO_FONT *font) {
 		}
 	}
 	//UpdateNodes
-	vcc.updateNode();
-	gnd.updateNode();
-	if (vcc.getIndex() != -1) {
-		pos firstRes = resistorArray[vcc.getIndex()].getCoords();
-		draw_line(vcc.getCorrds().x + al_get_bitmap_width(gui->vccImage) / 2, vcc.getCorrds().y + al_get_bitmap_height(gui->vccImage), firstRes.x, firstRes.y, al_map_rgb(LINECOLOUR), LINEWIDTH);
-	}
-	if (gnd.getIndex() != -1) {
-		pos lastRes = resistorArray[gnd.getIndex()].getCoords();
-		if (resistorArray[gnd.getIndex()].getHoriz()) {
-			draw_line(gnd.getCorrds().x + al_get_bitmap_width(gui->gndImage) / 2, gnd.getCorrds().y, lastRes.x + al_get_bitmap_width(gui->resistorImage), lastRes.y, al_map_rgb(LINECOLOUR), LINEWIDTH);
-		}
-		else {
-			draw_line(gnd.getCorrds().x + al_get_bitmap_width(gui->gndImage) / 2, gnd.getCorrds().y, lastRes.x, lastRes.y + al_get_bitmap_width(gui->resistorImage), al_map_rgb(LINECOLOUR), LINEWIDTH);
-		}
-	}
+	vcc.updateNode(resistorArray, gui->resistorImage);
+	gnd.updateNode(resistorArray, gui->resistorImage);
 }
 void ProgramCore::updateTextMode(ALLEGRO_FONT *font, int x, int y, enum ModeEnum modeEnum) {
 	switch (modeEnum) {
@@ -409,7 +400,11 @@ void ProgramCore::wired(pos mouse, GUIElements* gui, ProgramElements* elements) 
 	}
 	if (vcc.mouseOverNode(mouse)) {
 		if (resStart == NOTOVER) { resStart = NODE; }
-		else { elements->modeEnum = NORMAL; }
+		else { 
+			elements->modeEnum = NORMAL;
+			selectedResIndex = -1;
+			resStart = NOTOVER;
+		}
 	}
 	if (gnd.mouseOverNode(mouse)) {
 		if (resStart != NOTOVER) { 

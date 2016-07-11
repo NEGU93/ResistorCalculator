@@ -9,6 +9,8 @@
 #define READY 1
 #define EXIT -1
 
+#define DIAGONALLY 0 //1 = lines in diagonall, 0 = Rectas
+
 //////////////////////////////////////////////////////////////////////////////////////////////
 //				INICIALIZO ALLEGRO Y TODOS LOS COMPLEMENTOS QUE SE USAN						//
 //////////////////////////////////////////////////////////////////////////////////////////////
@@ -35,9 +37,12 @@ int init_allegro(ALL *allegro) {
 							allegro->screenHeight = SCREEN_Y;
 
 							if (allegro->downBar = al_load_bitmap("Resources/DownBar.png")) {
-								state = TRUE;
+								if (allegro->fondo = al_load_bitmap("Resources/BackImage.png")) {
+									state = TRUE;
+								}
+								else { printf("Couldn't load BackImage.png\n"); }
 							}
-							else { printf("Couldn't load BackImage.jpg"); }
+							else { printf("Couldn't load DownBar.png\n"); }
 						}
 						else { printf("Failed to create display"); }
 					}
@@ -147,5 +152,20 @@ void draw_line(int x1, int y1, int x2, int y2, ALLEGRO_COLOR color, float thickn
 	else {
 		al_draw_line(x1, y1, x1, y2, color, thickness);
 		al_draw_line(x1, y2, x2, y2, color, thickness);
+	}
+}
+void draw_line_inverted(int x1, int y1, int x2, int y2, ALLEGRO_COLOR color, float thickness) {
+	if (DIAGONALLY) {
+		al_draw_line(x1, y1, x2, y2, color, thickness);
+	}
+	else {
+		if (y1 > y2) {
+			al_draw_line(x1, y1, x2, y1, color, thickness);
+			al_draw_line(x2, y1, x2, y2, color, thickness);
+		}
+		else {
+			al_draw_line(x1, y1, x1, y2, color, thickness);
+			al_draw_line(x1, y2, x2, y2, color, thickness);
+		}
 	}
 }

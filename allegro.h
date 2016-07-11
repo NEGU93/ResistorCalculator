@@ -27,7 +27,7 @@ typedef struct {
 	//FONTS
 	ALLEGRO_FONT *font;
 	//BITMAPS
-	//ALLEGRO_BITMAP* fondo;
+	ALLEGRO_BITMAP* fondo;
 	ALLEGRO_BITMAP* downBar;
 } ALL;
 
@@ -35,6 +35,7 @@ int init_allegro(ALL *allegro);
 void destroyAll(ALL *allegro);
 ALLEGRO_BITMAP *al_load_bitmap_resized(const char *filename, ALL* allegro); //TODO: que pase solo los ints que necesito y no toda la struct
 void draw_line(int x1, int y1, int x2, int y2, ALLEGRO_COLOR color, float thickness);
+void draw_line_inverted(int x1, int y1, int x2, int y2, ALLEGRO_COLOR color, float thickness);
 
 #endif
 
