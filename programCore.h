@@ -75,7 +75,10 @@ private:
 	void wired(pos mouse, GUIElements* gui, ProgramElements* elements);
 	void nodeWire(pos mouse, ModeEnum &modeEnum);
 	void resistorWire(pos mouse, GUIElements* gui);
-	void ProgramCore::setFatherSon(vector<Resistor> &resistorArray, int father, int son);
+	void setFatherSon(vector<Resistor> &resistorArray, int father, int son);
+	void setStepBros(vector<Resistor> &resistorArray, int bro1, int bro2);
+	void setBros(vector<Resistor> &resistorArray, int bro1, int bro2);
+	bool checkForRealFather(vector<Resistor> &resistorArray, int index);
 	//Deletion Process
 	void deleteResistor(int indexToDelete);
 	void reorder(int indexToDelete);

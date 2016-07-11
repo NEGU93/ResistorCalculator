@@ -492,38 +492,44 @@ void ProgramCore::setStepBros(vector<Resistor> &resistorArray, int bro1, int bro
 	resistorArray[bro1].setStepBro(bro2);
 	resistorArray[bro2].setStepBro(bro1);
 }
-void setBros(vector<Resistor> &resistorArray, int bro1, int bro2) {
+void ProgramCore::setBros(vector<Resistor> &resistorArray, int bro1, int bro2) {
 	//If both brothers have a father then error
-	if (resistorArray[bro1].getFather() != -1 && resistorArray[bro2].getFather() != -1) {
+	if (checkForRealFather(resistorArray, bro1) && checkForRealFather(resistorArray, bro2)) {
 		cout << "Invalid wiring, at least one brother must have no father" << endl;
 		return;
 	}
 	//Gives prority to bro1 normally bro1 will be father.
-	if (resistorArray[bro1].getFather() != -1) { //If it has a father then this will have brother and the other the father
+	if (checkForRealFather(resistorArray, bro1)) { //If it has a father then this will have brother and the other the father
 		while (resistorArray[bro1].getBrother() != -1) { 
 			bro1 = resistorArray[bro1].getBrother(); 
-			if (resistorArray[bro1].getFather != -1) { cout << "Invalid wiring, at least one brother must have no father" << endl; return; }
+			// For the way setBros work, this shouold never be true. But just in case...
+			if (checkForRealFather(resistorArray, bro1)) { cout << "Invalid wiring, the program will explode once hit on calcule" << endl; return; }
 		}	//Makes sure it has no brother
 		resistorArray[bro1].setBrother(bro2);
 		resistorArray[bro2].setFather(bro1);
 	}
-	if (resistorArray[bro2].getFather() != -1) { //If it has a father then this will have brother and the other the father
+	if (checkForRealFather(resistorArray, bro2)) { //If it has a father then this will have brother and the other the father
 		while (resistorArray[bro2].getBrother() != -1) { 
 			bro2 = resistorArray[bro2].getBrother(); 
-			if (resistorArray[bro2].getFather != -1) { cout << "Invalid wiring, at least one brother must have no father" << endl; return; }
+			// For the way setBros work, this shouold never be true. But just in case...
+			if (checkForRealFather(resistorArray, bro2)) { cout << "Invalid wiring, the program will explode once hit on calcule" << endl; return; }
 		}
 		resistorArray[bro2].setBrother(bro1);
 		resistorArray[bro1].setFather(bro2);
 	}
 	// If both have no father
-	while (resistorArray[bro1].getBrother() != -1) { 
-		bro1 = resistorArray[bro1].getBrother(); 
-		if (resistorArray[bro1].getFather != -1) { cout << "Invalid wiring, at least one brother must have no father" << endl; return; }
-	}	//Makes sure it has no brother
-	while (resistorArray[bro2].getBrother() != -1) { 
-		bro2 = resistorArray[bro2].getBrother(); 
-		if (resistorArray[bro2].getFather != -1) { cout << "Invalid wiring, at least one brother must have no father" << endl; return; }
+	while (resistorArray[bro1].getBrother() != -1) { bro1 = resistorArray[bro1].getBrother(); }	//Makes sure it has no brother
+	if (bro1 != bro2) {
+		resistorArray[bro1].setBrother(bro2);
+		resistorArray[bro2].setFather(bro1);
 	}
+
+}
+bool ProgramCore::checkForRealFather(vector<Resistor> &resistorArray, int index) {
+	//As father can be both father or brother, this returns true if the father was a father
+	if (resistorArray[index].getFather() == -1) { cout << "wrong index, the index had no father at all" << endl; return false; } //This is preventive coding, It should be outside
+	if (resistorArray[resistorArray[index].getFather()].getSon() == index) { return true; }
+	else { return false; }
 }
 
 // Deletion Process
