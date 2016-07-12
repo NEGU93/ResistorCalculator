@@ -6,20 +6,20 @@ Para borrar usar la letra BACKSPACE*/
 
 double setValue(ALLEGRO_FONT* font)
 {
-	ALLEGRO_DISPLAY *display2 = NULL;
-	ALLEGRO_EVENT_QUEUE *event_queue2 = NULL;
-	ALLEGRO_TIMER *timer2 = NULL;
+	ALG allegroData = { NULL, NULL, NULL, NULL, };
+	ALG* allg = &allegroData;
+	double ValRes;
+	
+	init(allg,font);
+	ValRes = SearchEV(allg,font);
+	
+	destroy(allg);
 
-	bool key[11] = { false, false, false, false , false , false , false , false , false , false };
-	bool redraw = true;
-	bool doexit = false;
-	double fnumber;
-	int i = 0;
-	char number[30];
-	char *p2number;
-	p2number = number;
+	return ValRes;
+}
 
-
+int init(ALG* allg, ALLEGRO_FONT* font)
+{
 	if (!al_init()) {
 		fprintf(stderr, "failed to initialize allegro!\n");
 		return -1;
@@ -30,43 +30,43 @@ double setValue(ALLEGRO_FONT* font)
 		return -1;
 	}
 
-	timer2 = al_create_timer(1.0 / FPS);
-	if (!timer2) {
+	allg->timer2 = al_create_timer(1.0 / FPS);
+	if (!allg->timer2) {
 		fprintf(stderr, "failed to create timer!\n");
 		return -1;
 	}
 
-	display2 = al_create_display(SCREEN_W, SCREEN_H);
-	if (!display2) {
+	allg->display2 = al_create_display(SCREEN_W, SCREEN_H);
+	if (!allg->display2) {
 		fprintf(stderr, "failed to create display!\n");
-		al_destroy_timer(timer2);
+		al_destroy_timer(allg->timer2);
 		return -1;
 	}
-	al_set_window_title(display2, "Set Value");
 
+
+	al_set_window_title(allg->display2, "Set Value");
 
 	al_init_font_addon();
 
 
-
 	al_clear_to_color(al_map_rgb(255, 0, 255));
 
-	al_set_target_bitmap(al_get_backbuffer(display2));
+	al_set_target_bitmap(al_get_backbuffer(allg->display2));
 
-	event_queue2 = al_create_event_queue();
-	if (!event_queue2) {
+	allg->event_queue2 = al_create_event_queue();
+	if (!allg->event_queue2) {
 		fprintf(stderr, "failed to create event_queue!\n");
 
-		al_destroy_display(display2);
-		al_destroy_timer(timer2);
+		al_destroy_display(allg->display2);
+		al_destroy_timer(allg->timer2);
 		return -1;
 	}
 
-	al_register_event_source(event_queue2, al_get_display_event_source(display2));
+	al_register_event_source(allg->event_queue2, al_get_display_event_source(allg->display2));
 
-	al_register_event_source(event_queue2, al_get_timer_event_source(timer2));
+	al_register_event_source(allg->event_queue2, al_get_timer_event_source(allg->timer2));
 
-	al_register_event_source(event_queue2, al_get_keyboard_event_source());
+	al_register_event_source(allg->event_queue2, al_get_keyboard_event_source());
 
 	al_clear_to_color(al_map_rgb(0, 0, 0));
 
@@ -74,12 +74,28 @@ double setValue(ALLEGRO_FONT* font)
 
 	al_flip_display();
 
-	al_start_timer(timer2);
+	al_start_timer(allg->timer2);
+
+	return 0;
+}
+
+
+double SearchEV(ALG* allg, ALLEGRO_FONT* font)
+{
+	int i = 0;
+	bool key[11] = { false, false, false, false , false , false , false , false , false , false };
+	bool redraw = true;
+	bool doexit = false;
+	double fnumber;
+	char number[30];
+	char *p2number;
+	p2number = number;
+
 
 	while (!doexit)
 	{
 		ALLEGRO_EVENT ev2;
-		al_wait_for_event(event_queue2, &ev2);
+		al_wait_for_event(allg->event_queue2, &ev2);
 
 		if (ev2.type == ALLEGRO_EVENT_TIMER) {
 
@@ -249,7 +265,7 @@ double setValue(ALLEGRO_FONT* font)
 			}
 		}
 
-		if (redraw && al_is_event_queue_empty(event_queue2)) {
+		if (redraw && al_is_event_queue_empty(allg->event_queue2)) {
 			redraw = false;
 
 			al_clear_to_color(al_map_rgb(WHITE));
@@ -262,16 +278,16 @@ double setValue(ALLEGRO_FONT* font)
 
 			al_flip_display();
 		}
+
+		fnumber = atof(number);
 	}
-
-	fnumber = atof(number);
-
-	printf("%f \n", fnumber);
-
-
-	al_destroy_timer(timer2);
-	al_destroy_display(display2);
-	al_destroy_event_queue(event_queue2);
-
 	return fnumber;
+}
+
+int destroy(ALG* allg)
+{
+	al_destroy_timer(allg->timer2);
+	al_destroy_display(allg->display2);
+	al_destroy_event_queue(allg->event_queue2);
+	return 0;
 }
