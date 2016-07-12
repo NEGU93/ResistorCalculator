@@ -302,8 +302,10 @@ bool ProgramCore::updateCalculButton() {
 		for (int i = 0; i < resistorArray.size(); i++) {
 			if (resistorArray[i].getSon() == -1 && i != gnd.getIndex()) {
 				if (resistorArray[i].getStepBro() == -1 || resistorArray[i].getFather() == -1) {
-					ready = false;
-					return ready; //No need to keep looking, I know the result.
+					if (vcc.getIndex() != i) {
+						ready = false;
+						return ready; //No need to keep looking, I know the result.
+					}
 				}
 			}
 		}
@@ -468,7 +470,8 @@ void ProgramCore::resistorWire(pos mouse, GUIElements* gui) {
 					else { cout << "Should never reach here" << endl; }
 				}
 				else { cout << "Error, resStart wasn't Lower nor Upper" << endl; } //Normally it should never get here.
-				
+				if (vcc.getIndex() != -1) { if (resistorArray[vcc.getIndex()].getFather() != -1) { vcc.setIndex(-1); } }
+				if (gnd.getIndex() != -1) { if (resistorArray[gnd.getIndex()].getSon() != -1) { gnd.setIndex(-1); } }
 				//End of wiring
 				resStart = NOTOVER;
 				selectedResIndex = -1;
@@ -503,16 +506,16 @@ void ProgramCore::setBros(vector<Resistor> &resistorArray, int bro1, int bro2) {
 		return;
 	}
 	//Gives prority to bro1 normally bro1 will be father.
-	if (checkForRealFather(resistorArray, bro1)) { //If it has a father then this will have brother and the other the father
+	else if (checkForRealFather(resistorArray, bro1)) { //If it has a father then this will have brother and the other the father
 		while (resistorArray[bro1].getBrother() != -1) { 
 			bro1 = resistorArray[bro1].getBrother(); 
 			// For the way setBros work, this shouold never be true. But just in case...
 			if (checkForRealFather(resistorArray, bro1)) { cout << "Invalid wiring, the program will explode once hit on calcule" << endl; return; }
 		}	//Makes sure it has no brother
-		resistorArray[bro1].setBrother(bro2);
 		resistorArray[bro2].setFather(bro1);
+		resistorArray[bro1].setBrother(bro2);
 	}
-	if (checkForRealFather(resistorArray, bro2)) { //If it has a father then this will have brother and the other the father
+	else if (checkForRealFather(resistorArray, bro2)) { //If it has a father then this will have brother and the other the father
 		while (resistorArray[bro2].getBrother() != -1) { 
 			bro2 = resistorArray[bro2].getBrother(); 
 			// For the way setBros work, this shouold never be true. But just in case...
@@ -522,10 +525,12 @@ void ProgramCore::setBros(vector<Resistor> &resistorArray, int bro1, int bro2) {
 		resistorArray[bro1].setFather(bro2);
 	}
 	// If both have no father
-	while (resistorArray[bro1].getBrother() != -1) { bro1 = resistorArray[bro1].getBrother(); }	//Makes sure it has no brother
-	if (bro1 != bro2) {
-		resistorArray[bro1].setBrother(bro2);
-		resistorArray[bro2].setFather(bro1);
+	else {
+		while (resistorArray[bro1].getBrother() != -1) { bro1 = resistorArray[bro1].getBrother(); }	//Makes sure it has no brother
+		if (bro1 != bro2) {
+			resistorArray[bro1].setBrother(bro2);
+			resistorArray[bro2].setFather(bro1);
+		}
 	}
 
 }
@@ -585,43 +590,82 @@ void ProgramCore::deletePointersOfandFrom(int indexToDelete) {
 }
 
 // Calculus Functions
-bool ProgramCore::startCalculation(ALL* allegro, GUIElements* gui, pos mouse, enum ModeEnum modeEnum) {
-	double ans = calculate(vcc.getIndex(), allegro, gui, mouse, modeEnum); //If I got here I already checked vcc points the correct one and that I have a limit.
-	return true;
-}
-double ProgramCore::calculate(int index, ALL* allegro, GUIElements* gui, pos mouse, enum ModeEnum modeEnum) {
-	//Debería haber un chequeo del step Bro y devolver de una. Cuidado con mover bien los punteros en ese caso.
-	if (resistorArray[index].getBrother() != -1) { //Have Brother
-		while (resistorArray[index].getStepBro() == -1) { // This must be done until the parallel is only with the resistor now using. 
-		//TODO: work on this. En realidad se ceba y calcula todo de una y le chupa un huevo todo.
-			getSeries(index, allegro, gui, mouse, modeEnum);
-			updateScreen(allegro, gui, mouse, modeEnum);
-			Sleep(TIMEPAUSE);
+double ProgramCore::calculus(int index, ALL* allegro, GUIElements* gui, pos mouse, enum ModeEnum modeEnum) {
+	if (resistorArray[index].getStepBro() != -1) {		//Has a stepBro
+		if (resistorArray[index].getBrother() == resistorArray[index].getStepBro()) {
+			//Parallel Simple
+			resistorArray[index].setValue(parallel(resistorArray[index].getValue(), resistorArray[resistorArray[index].getBrother()].getValue()));
+			takeCareOfHim(index, resistorArray[index].getBrother(), allegro, gui, mouse, modeEnum);
 		}
-		getParallel(index, allegro, gui, mouse, modeEnum);	//Now that the resistor has only one thing (can be lots of other resistors) in parallel, I get it.
-		updateScreen(allegro, gui, mouse, modeEnum);
-		Sleep(TIMEPAUSE);
+		else if (resistorArray[index].getBrother() == -1) { 
+			return resistorArray[index].getValue(); 
+		}
+		else {
+			double brotherValue = calculus(resistorArray[index].getBrother(), allegro, gui, mouse, modeEnum); //Here I have faith that the return will have the same stepbro that bro
+			//Parallel Simple
+			resistorArray[index].setValue(parallel(resistorArray[index].getValue(), brotherValue));
+			takeCareOfHim(index, resistorArray[index].getBrother(), allegro, gui, mouse, modeEnum);
+		}
 	}
-	if (resistorArray[index].getSon() != -1) { //Have Son
-		getSeries(index, allegro, gui, mouse, modeEnum);
-		updateScreen(allegro, gui, mouse, modeEnum);
-		Sleep(TIMEPAUSE);
+	else if (resistorArray[index].getBrother() != -1) {
+		double sonValue = calculus(resistorArray[index].getSon(), allegro, gui, mouse, modeEnum);
+		resistorArray[index].setValue(serie(resistorArray[index].getValue(), sonValue));
+		takeCareOfHim(index, resistorArray[index].getSon(), allegro, gui, mouse, modeEnum);
+		calculus(index, allegro, gui, mouse, modeEnum);
+		//double brotherValue = calculus(resistorArray[index].getBrother(), allegro, gui, mouse, modeEnum); 
+		////Here I have faith that the return will have the same stepbro that bro
+		////Parallel Simple
+		//resistorArray[index].setValue(parallel(resistorArray[index].getValue(), brotherValue));
+		//takeCareOfHim(index, resistorArray[index].getBrother(), allegro, gui, mouse, modeEnum);
+	}
+	if (resistorArray[index].getSon() != -1) {
+		double sonValue = calculus(resistorArray[index].getSon(), allegro, gui, mouse, modeEnum);
+		// Now Series
+		resistorArray[index].setValue(serie(resistorArray[index].getValue(), sonValue));
+		takeCareOfHim(index, resistorArray[index].getSon(), allegro, gui, mouse, modeEnum);
 	}
 	return resistorArray[index].getValue();
 }
-void ProgramCore::getSeries(int index, ALL* allegro, GUIElements* gui, pos mouse, enum ModeEnum modeEnum) {
-	resistorArray[index].setValue(resistorArray[index].getValue() + calculate(resistorArray[index].getSon(), allegro, gui, mouse, modeEnum)); //Get the series.
-	if (resistorArray[resistorArray[index].getSon()].getStepBro() != -1) {	//If his son had a Step Bro. This step Bro thould be taken to the father to close the loop
-		resistorArray[index].setStepBro( resistorArray[resistorArray[index].getSon()].getStepBro() );
-		resistorArray[resistorArray[index].getSon()].deleteStepBro();
+void ProgramCore::deleteEvidence(int survivor, int toDelete) {
+	//GND
+	if (gnd.getIndex() == toDelete) { gnd.setIndex(survivor); }
+	//Pass Brother
+	if (resistorArray[toDelete].getBrother() != -1) {
+		resistorArray[survivor].setBrother(resistorArray[toDelete].getBrother());	//Pass Brother
+		resistorArray[resistorArray[survivor].getBrother()].setFather(survivor);	//Tell the brother who his new father is.
+		resistorArray[toDelete].setBrother(-1);
 	}
-	if (resistorArray[index].getSon() == gnd.getIndex()) { gnd.setIndex(index); } //If son was targeted bu gnd, Then now gnd should target the father.
-	deleteResistor(resistorArray[index].getSon());
+
+	//Pass StepBro
+	resistorArray[survivor].setStepBro(resistorArray[toDelete].getStepBro());
+	if (resistorArray[survivor].getStepBro() != -1) {
+		resistorArray[resistorArray[survivor].getStepBro()].setStepBro(survivor);
+		resistorArray[toDelete].setStepBro(-1);
+	}
+	//Pass Son
+	if (resistorArray[toDelete].getSon() != -1) { 
+		resistorArray[survivor].setSon(resistorArray[toDelete].getSon());
+		resistorArray[resistorArray[survivor].getSon()].setFather(survivor);
+		resistorArray[toDelete].setSon(-1);
+	}
 }
-void ProgramCore::getParallel(int index, ALL* allegro, GUIElements* gui, pos mouse, enum ModeEnum modeEnum) {
-	//TODO: nunca se fija si es stepBro o no... demasiada confianza.
-	double broCalculate = calculate(resistorArray[index].getBrother(), allegro, gui, mouse, modeEnum); //Get the brother in parallel.
-	resistorArray[index].setValue((resistorArray[index].getValue() * broCalculate) / (resistorArray[index].getValue() + broCalculate)); // Caclulate parallel
-	if (resistorArray[index].getBrother() == gnd.getIndex()) { gnd.setIndex(index); }	//Before deletion, I change the gnd to the principal index just in case this parallel had the gnd in it.
-	deleteResistor(resistorArray[index].getBrother());
+void ProgramCore::takeCareOfHim(int survivor, int toDelete, ALL* allegro, GUIElements* gui, pos mouse, enum ModeEnum modeEnum) {
+	deleteEvidence(survivor, toDelete);
+	deleteResistor(toDelete);
+	updateScreen(allegro, gui, mouse, modeEnum);
+	Sleep(TIMEPAUSE);
+}
+double ProgramCore::parallel(double res1, double res2) {
+	return (res1 * res2) / serie(res1, res2);
+}
+double ProgramCore::serie(double res1, double res2) {
+	return res1 + res2;
+}
+bool ProgramCore::startCalculation(ALL* allegro, GUIElements* gui, pos mouse, enum ModeEnum modeEnum) {
+	double ans = calculus(vcc.getIndex(), allegro, gui, mouse, modeEnum); //If I got here I already checked vcc points the correct one and that I have a limit.
+	resistorArray[vcc.getIndex()].setFather(-1);
+	resistorArray[vcc.getIndex()].setSon(-1);
+	resistorArray[vcc.getIndex()].setBrother(-1);
+	resistorArray[vcc.getIndex()].setStepBro(-1);
+	return true;
 }

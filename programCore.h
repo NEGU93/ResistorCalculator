@@ -67,10 +67,14 @@ private:
 	BOOL click(ALL* allegro, pos mouse, GUIElements* gui, ProgramElements* elements);
 	void rightClick(ProgramElements* elements, GUIElements* gui);
 	// Main Calculation
+
+	double calculus(int index, ALL* allegro, GUIElements* gui, pos mouse, enum ModeEnum modeEnum);
+	void deleteEvidence(int survivor, int toDelete);
+	void takeCareOfHim(int survivor, int toDelete, ALL* allegro, GUIElements* gui, pos mouse, enum ModeEnum modeEnum);
+	double parallel(double res1, double res2);
+	double serie(double res1, double res2);
+
 	bool startCalculation(ALL* allegro, GUIElements* gui, pos mouse, enum ModeEnum modeEnum);
-	double calculate(int index, ALL* allegro, GUIElements* gui, pos mouse, enum ModeEnum modeEnum);
-	void getSeries(int index, ALL* allegro, GUIElements* gui, pos mouse, enum ModeEnum modeEnum);
-	void getParallel(int index, ALL* allegro, GUIElements* gui, pos mouse, enum ModeEnum modeEnum);
 	// Resistor Manipulation
 	void wired(pos mouse, GUIElements* gui, ProgramElements* elements);
 	void nodeWire(pos mouse, ModeEnum &modeEnum);
