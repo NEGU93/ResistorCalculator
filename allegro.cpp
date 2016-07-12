@@ -145,8 +145,8 @@ ALLEGRO_BITMAP *al_load_bitmap_resized(const char *filename, ALL* allegro) {
 	return resized_bmp;
 }
 
-void draw_line(int x1, int y1, int x2, int y2, ALLEGRO_COLOR color, float thickness) {
-	if (DIAGONALLY) {
+void draw_line(int x1, int y1, int x2, int y2, ALLEGRO_COLOR color, float thickness, bool diagonally) {
+	if (diagonally) {
 		al_draw_line(x1, y1, x2, y2, color, thickness);
 	}
 	else {
@@ -160,8 +160,8 @@ void draw_line(int x1, int y1, int x2, int y2, ALLEGRO_COLOR color, float thickn
 		}
 	}
 }
-void draw_line_inverted(int x1, int y1, int x2, int y2, ALLEGRO_COLOR color, float thickness) {
-	if (DIAGONALLY) {
+void draw_line_inverted(int x1, int y1, int x2, int y2, ALLEGRO_COLOR color, float thickness, bool diagonally) {
+	if (diagonally) {
 		al_draw_line(x1, y1, x2, y2, color, thickness);
 	}
 	else {

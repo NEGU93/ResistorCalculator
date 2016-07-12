@@ -17,6 +17,7 @@ ProgramCore::ProgramCore(GUIElements* gui) {
 	backupPos.y = 0;
 	grid = true;
 	stepMode = true;
+	diagonally = false;
 }
 ProgramCore::~ProgramCore() {
 	resistorArray.clear();
@@ -79,6 +80,9 @@ BOOL ProgramCore::eventHandler(ALL* allegro, ProgramElements* elements, GUIEleme
 			selectedResIndex = -1;
 			resStart = NOTOVER;
 			elements->modeEnum = NORMAL;
+			break;
+		case ALLEGRO_KEY_L:
+			diagonally = !diagonally;
 			break;
 		}
 	}
@@ -236,29 +240,29 @@ void ProgramCore::updateModes(GUIElements* gui, pos mouse, enum ModeEnum modeEnu
 		al_draw_line(mouse.x , mouse.y - DELTA, mouse.x, mouse.y + DELTA, al_map_rgb(BLACK), 1);
 		if (selectedResIndex != -1) {
 			pos resTime = resistorArray[selectedResIndex].getCoords();
-			if (resStart == UPPERPART) { draw_line(mouse.x, mouse.y, resTime.x, resTime.y, al_map_rgb(LINECOLOUR), LINEWIDTH); }
+			if (resStart == UPPERPART) { draw_line(mouse.x, mouse.y, resTime.x, resTime.y, al_map_rgb(LINECOLOUR), LINEWIDTH, diagonally); }
 			else if (resStart == LOWERPART) {
-				if (resistorArray[selectedResIndex].getHoriz()) { draw_line(mouse.x, mouse.y, resTime.x + al_get_bitmap_width(gui->resistorImage), resTime.y, al_map_rgb(LINECOLOUR), LINEWIDTH); }
-				else { draw_line(mouse.x, mouse.y, resTime.x, resTime.y + al_get_bitmap_width(gui->resistorImage), al_map_rgb(LINECOLOUR), LINEWIDTH); }
+				if (resistorArray[selectedResIndex].getHoriz()) { draw_line(mouse.x, mouse.y, resTime.x + al_get_bitmap_width(gui->resistorImage), resTime.y, al_map_rgb(LINECOLOUR), LINEWIDTH, diagonally); }
+				else { draw_line(mouse.x, mouse.y, resTime.x, resTime.y + al_get_bitmap_width(gui->resistorImage), al_map_rgb(LINECOLOUR), LINEWIDTH, diagonally); }
 			}
 		}
 		else if (resStart == NODEVCC) {
-			draw_line(vcc.getCorrds().x + al_get_bitmap_width(gui->vccImage) / 2, vcc.getCorrds().y + al_get_bitmap_height(gui->vccImage), mouse.x, mouse.y, al_map_rgb(LINECOLOUR), LINEWIDTH);
+			draw_line(vcc.getCorrds().x + al_get_bitmap_width(gui->vccImage) / 2, vcc.getCorrds().y + al_get_bitmap_height(gui->vccImage), mouse.x, mouse.y, al_map_rgb(LINECOLOUR), LINEWIDTH, diagonally);
 		}
 		else if (resStart == NODEGND) {
-			draw_line(gnd.getCorrds().x + al_get_bitmap_width(gui->gndImage) / 2, gnd.getCorrds().y, mouse.x, mouse.y, al_map_rgb(LINECOLOUR), LINEWIDTH);
+			draw_line(gnd.getCorrds().x + al_get_bitmap_width(gui->gndImage) / 2, gnd.getCorrds().y, mouse.x, mouse.y, al_map_rgb(LINECOLOUR), LINEWIDTH, diagonally);
 		}
 	}
 }
 void ProgramCore::updateResistors(GUIElements* gui, ALLEGRO_FONT *font) {
 	if (!resistorArray.empty()) {
 		for (int i = 0; i < resistorArray.size(); i++) {
-			resistorArray[i].updateResistor(gui->resistorImage, resistorArray, font);
+			resistorArray[i].updateResistor(gui->resistorImage, resistorArray, font, diagonally);
 		}
 	}
 	//UpdateNodes
-	vcc.updateNode(resistorArray, gui->resistorImage);
-	gnd.updateNode(resistorArray, gui->resistorImage);
+	vcc.updateNode(resistorArray, gui->resistorImage, diagonally);
+	gnd.updateNode(resistorArray, gui->resistorImage, diagonally);
 }
 void ProgramCore::updateTextMode(ALLEGRO_FONT *font, int x, int y, enum ModeEnum modeEnum) {
 	switch (modeEnum) {
@@ -420,6 +424,7 @@ void ProgramCore::rightClick(ProgramElements* elements, GUIElements* gui) {
 	}
 } 
 
+// Wiring Part
 void ProgramCore::wired(pos mouse, GUIElements* gui, ProgramElements* elements) {
 	// This function is used wile conecting resistors with each other.
 	resistorWire(mouse, gui);
@@ -448,8 +453,6 @@ void ProgramCore::resistorWire(pos mouse, GUIElements* gui) {
 				*				3.2: LOWERPART: Set Step Bros
 				*			4. UPPERPART:
 				*				4.1: UPPERPART:	SET BROTHERS
-				*					a.
-				*					b.
 				*				4.2: LOWERPART: Set father / Son backward
 				****************************************************************************************** */  
 				if (resStart == NODEVCC) { vcc.setIndex(i); }
@@ -486,9 +489,10 @@ void ProgramCore::setFatherSon(vector<Resistor> &resistorArray, int father, int 
 	resistorArray[son].setFather(father);
 }
 void ProgramCore::setStepBros(vector<Resistor> &resistorArray, int bro1, int bro2) {
+	//TODO: Check, one step bro could not be pointed by his brother.
 	//Go where no step brother is defined
-	//while (resistorArray[bro1].getStepBro() != -1) { bro1 = resistorArray[bro1].getStepBro(); }
-	//while (resistorArray[bro2].getStepBro() != -1) { bro2 = resistorArray[bro2].getStepBro(); }
+	if (resistorArray[bro1].getStepBro() != -1) { resistorArray[resistorArray[bro1].getStepBro()].setStepBro(-1);	}
+	if (resistorArray[bro2].getStepBro() != -1) { resistorArray[resistorArray[bro2].getStepBro()].setStepBro(-1); }
 	resistorArray[bro1].setStepBro(bro2);
 	resistorArray[bro2].setStepBro(bro1);
 }

@@ -7,7 +7,7 @@
 class Resistor {
 public:
 	Resistor(bool Vertical, int x, int y, bool stepMode);
-	void updateResistor(ALLEGRO_BITMAP* resistorImage, vector<Resistor> &resistorArray, ALLEGRO_FONT *font);
+	void updateResistor(ALLEGRO_BITMAP* resistorImage, vector<Resistor> &resistorArray, ALLEGRO_FONT *font, bool diagonally);
 	UpperLowerEnum mouseOverRes(ALLEGRO_BITMAP* resistorImage, pos mouse);
 	//Seters
 	void setValue(double value) { this->value = value; }

@@ -91,6 +91,7 @@ private:
 	int selectedResIndex;
 	bool grid;
 	bool stepMode;
+	bool diagonally;
 	pos backupPos;
 	UpperLowerEnum resStart;
 };

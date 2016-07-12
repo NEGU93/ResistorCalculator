@@ -12,7 +12,7 @@ class Node {
 public:
 	Node();
 	Node(ALLEGRO_BITMAP* image, bool type);
-	void updateNode(vector<Resistor> &resistorArray, ALLEGRO_BITMAP* resistorImage);
+	void updateNode(vector<Resistor> &resistorArray, ALLEGRO_BITMAP* resistorImage, bool diagonally);
 	bool mouseOverNode(pos mouse);
 	bool wireNode(pos mouse, int &selectedResIndex, UpperLowerEnum& resStart);
 	//Setters

@@ -17,7 +17,7 @@ Resistor::Resistor(bool vertical, int x, int y, bool stepMode) {
 	ptr2son = -1;
 	ptr2stepBro = -1;
 }
-void Resistor::updateResistor(ALLEGRO_BITMAP* resistorImage, vector<Resistor> &resistorArray, ALLEGRO_FONT *font) {
+void Resistor::updateResistor(ALLEGRO_BITMAP* resistorImage, vector<Resistor> &resistorArray, ALLEGRO_FONT *font, bool diagonally) {
 	if (horizontal) {
 		al_draw_bitmap(resistorImage, rPos.x, rPos.y - al_get_bitmap_height(resistorImage) / 2, 0);
 		al_draw_textf(font, al_map_rgb(BLACK), rPos.x + al_get_bitmap_width(resistorImage) / 2, rPos.y - al_get_bitmap_height(resistorImage) / 2, ALLEGRO_ALIGN_CENTER, "%.0f Ohm", value);
@@ -31,10 +31,10 @@ void Resistor::updateResistor(ALLEGRO_BITMAP* resistorImage, vector<Resistor> &r
 		if (ptr2son < resistorArray.size()) {	//Normally this should always be true. But just in case, to know where it exploded
 			pos sonPos = resistorArray[ptr2son].getCoords();
 			if (horizontal) {
-				draw_line(rPos.x + al_get_bitmap_width(resistorImage), rPos.y, sonPos.x, sonPos.y, al_map_rgb(LINECOLOUR), LINEWIDTH);
+				draw_line(rPos.x + al_get_bitmap_width(resistorImage), rPos.y, sonPos.x, sonPos.y, al_map_rgb(LINECOLOUR), LINEWIDTH, diagonally);
 			}
 			else {
-				draw_line(rPos.x, rPos.y + al_get_bitmap_width(resistorImage), sonPos.x, sonPos.y, al_map_rgb(LINECOLOUR), LINEWIDTH);
+				draw_line(rPos.x, rPos.y + al_get_bitmap_width(resistorImage), sonPos.x, sonPos.y, al_map_rgb(LINECOLOUR), LINEWIDTH, diagonally);
 			}
 		}
 		else { cout << "Son of a resistor was out of bounds" << endl; }
@@ -42,7 +42,7 @@ void Resistor::updateResistor(ALLEGRO_BITMAP* resistorImage, vector<Resistor> &r
 	if (ptr2brother != -1) {
 		if (ptr2brother < resistorArray.size()) {
 			pos broPos = resistorArray[ptr2brother].getCoords();
-			draw_line(rPos.x, rPos.y, broPos.x, broPos.y, al_map_rgb(LINECOLOUR), LINEWIDTH);
+			draw_line(rPos.x, rPos.y, broPos.x, broPos.y, al_map_rgb(LINECOLOUR), LINEWIDTH, diagonally);
 		}
 		else { cout << "Brother out of bounds" << endl; }
 	}
@@ -51,12 +51,12 @@ void Resistor::updateResistor(ALLEGRO_BITMAP* resistorImage, vector<Resistor> &r
 			pos broPos = resistorArray[ptr2stepBro].getCoords();
 			bool broHorizontal = resistorArray[ptr2stepBro].getHoriz();
 			if (horizontal) {
-				if (broHorizontal) { draw_line(rPos.x + al_get_bitmap_width(resistorImage), rPos.y, broPos.x + al_get_bitmap_width(resistorImage), broPos.y, al_map_rgb(LINECOLOUR), LINEWIDTH); }
-				else { draw_line_inverted(rPos.x + al_get_bitmap_width(resistorImage), rPos.y, broPos.x, broPos.y + al_get_bitmap_width(resistorImage), al_map_rgb(LINECOLOUR), LINEWIDTH); }
+				if (broHorizontal) { draw_line(rPos.x + al_get_bitmap_width(resistorImage), rPos.y, broPos.x + al_get_bitmap_width(resistorImage), broPos.y, al_map_rgb(LINECOLOUR), LINEWIDTH, diagonally); }
+				else { draw_line_inverted(rPos.x + al_get_bitmap_width(resistorImage), rPos.y, broPos.x, broPos.y + al_get_bitmap_width(resistorImage), al_map_rgb(LINECOLOUR), LINEWIDTH, diagonally); }
 			}
 			else {
-				if (broHorizontal) { draw_line_inverted(rPos.x, rPos.y + al_get_bitmap_width(resistorImage), broPos.x + al_get_bitmap_width(resistorImage), broPos.y, al_map_rgb(LINECOLOUR), LINEWIDTH); }
-				else { draw_line_inverted(rPos.x, rPos.y + al_get_bitmap_width(resistorImage), broPos.x,  broPos.y + al_get_bitmap_width(resistorImage), al_map_rgb(LINECOLOUR), LINEWIDTH); }
+				if (broHorizontal) { draw_line_inverted(rPos.x, rPos.y + al_get_bitmap_width(resistorImage), broPos.x + al_get_bitmap_width(resistorImage), broPos.y, al_map_rgb(LINECOLOUR), LINEWIDTH, diagonally); }
+				else { draw_line_inverted(rPos.x, rPos.y + al_get_bitmap_width(resistorImage), broPos.x,  broPos.y + al_get_bitmap_width(resistorImage), al_map_rgb(LINECOLOUR), LINEWIDTH, diagonally); }
 			}
 		}
 		else { cout << "StepBro out of bounds" << endl; }
