@@ -492,12 +492,22 @@ void ProgramCore::setFatherSon(vector<Resistor> &resistorArray, int father, int 
 	resistorArray[son].setFather(father);
 }
 void ProgramCore::setStepBros(vector<Resistor> &resistorArray, int bro1, int bro2) {
-	//TODO: Check, one step bro could not be pointed by his brother.
-	//Go where no step brother is defined
-	if (resistorArray[bro1].getStepBro() != -1) { resistorArray[resistorArray[bro1].getStepBro()].setStepBro(-1);	}
-	if (resistorArray[bro2].getStepBro() != -1) { resistorArray[resistorArray[bro2].getStepBro()].setStepBro(-1); }
-	resistorArray[bro1].setStepBro(bro2);
-	resistorArray[bro2].setStepBro(bro1);
+	int save = bro1;
+	int iter = save;
+	if (resistorArray[iter].getStepBro() != -1) {
+		while (resistorArray[iter].getStepBro() != save) {
+			if (resistorArray[iter].getStepBro() == bro2) { return; }
+			else { iter = resistorArray[iter].getStepBro(); }
+		}
+	}
+	//if (resistorArray[bro1].getStepBro() == bro2) { return; }
+	// This make a circle of stepbros, Infinite loop
+	int tempBro1 = resistorArray[bro1].getStepBro();
+	int tempBro2 = resistorArray[bro2].getStepBro();
+	if (tempBro1 == -1) { resistorArray[bro2].setStepBro(bro1); }
+	else { resistorArray[bro2].setStepBro(tempBro1); }
+	if (tempBro2 == -1) { resistorArray[bro1].setStepBro(bro2); }
+	else { resistorArray[bro1].setStepBro(tempBro2); }
 }
 void ProgramCore::setBros(vector<Resistor> &resistorArray, int bro1, int bro2) {
 	//If both brothers have a father then error
@@ -582,19 +592,32 @@ void ProgramCore::deletePointersOfandFrom(int indexToDelete) {
 	if (resistorToDelete.getBrother() != -1) { //Take care of your brother
 		resistorArray[resistorToDelete.getBrother()].deleteFather();
 	}
-	for (int i = 0; i < resistorArray.size(); i++) {
-		if (resistorArray[i].getStepBro() == indexToDelete) { resistorArray[i].deleteStepBro(); }
-	}
+	deleteStepBro(indexToDelete);
 	if (gnd.getIndex() == indexToDelete) { gnd.setIndex(-1); } //Does GND or VCC target the resistor?
 	if (vcc.getIndex() == indexToDelete) { vcc.setIndex(-1); }
+}
+void ProgramCore::deleteStepBro(int index) {
+	if (resistorArray[index].getStepBro() == -1) { return; }
+	int byPass1 = resistorArray[index].getStepBro();	//A quien apunte index
+	int byPass2 = index;	//Quien lo apunta a index
+	while (resistorArray[byPass2].getStepBro() != index ) {
+		byPass2 = resistorArray[byPass2].getStepBro();
+	}
+	if (byPass1 == byPass2) {
+		resistorArray[byPass2].setStepBro(-1);
+		return;
+	}
+	resistorArray[byPass2].setStepBro(byPass1);
+	resistorArray[index].setStepBro(-1);
 }
 
 // Calculus Functions
 double ProgramCore::calculus(int index, ALL* allegro, GUIElements* gui, pos mouse, enum ModeEnum modeEnum) {
 	if (resistorArray[index].getStepBro() != -1) {		//Has a stepBro
-		if (resistorArray[index].getBrother() == resistorArray[index].getStepBro()) {
+		if (resistorArray[index].getBrother() != -1 && readyForParallel(resistorArray[index].getBrother(), index)) {
+			double brotherValue = calculus(resistorArray[index].getBrother(), allegro, gui, mouse, modeEnum); //Here I have faith that the return will have the same stepbro that bro
 			//Parallel Simple
-			resistorArray[index].setValue(parallel(resistorArray[index].getValue(), resistorArray[resistorArray[index].getBrother()].getValue()));
+			resistorArray[index].setValue(parallel(resistorArray[index].getValue(), brotherValue));
 			takeCareOfHim(index, resistorArray[index].getBrother(), allegro, gui, mouse, modeEnum);
 		}
 		else if (resistorArray[index].getBrother() == -1) { 
@@ -637,10 +660,10 @@ void ProgramCore::deleteEvidence(int survivor, int toDelete) {
 	}
 
 	//Pass StepBro
-	resistorArray[survivor].setStepBro(resistorArray[toDelete].getStepBro());
-	if (resistorArray[survivor].getStepBro() != -1) {
-		resistorArray[resistorArray[survivor].getStepBro()].setStepBro(survivor);
-		resistorArray[toDelete].setStepBro(-1);
+
+	if (resistorArray[toDelete].getStepBro() != -1) {
+		setStepBros(resistorArray, survivor, toDelete);
+		//deleteStepBro(toDelete);
 	}
 	//Pass Son
 	if (resistorArray[toDelete].getSon() != -1) { 
@@ -668,4 +691,17 @@ bool ProgramCore::startCalculation(ALL* allegro, GUIElements* gui, pos mouse, en
 	resistorArray[vcc.getIndex()].setBrother(-1);
 	resistorArray[vcc.getIndex()].setStepBro(-1);
 	return true;
+}
+bool ProgramCore::readyForParallel(int res1, int res2) {
+	int equalTo = resistorArray[res1].getBrother();
+	if (equalTo == -1) { equalTo = resistorArray[res2].getBrother(); }
+	if (equalTo == -1) { cout << "Not even a brother to make the loop" << endl; return false; }
+	int i = resistorArray[equalTo].getFather();
+	int compare = i;
+	i = resistorArray[compare].getStepBro();
+	while (i != compare) {
+		if (i == equalTo) { return true; }
+		i = resistorArray[i].getStepBro();
+	}
+	return false;
 }
